@@ -1,0 +1,537 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  WORKER
+  THERAPIST
+  SAFETY_MANAGER
+  HR_ADMIN
+  COMPANY_ADMIN
+  SUPER_ADMIN
+}
+
+enum PhysicalDemandLevel {
+  SEDENTARY
+  LIGHT
+  MEDIUM
+  HEAVY
+  VERY_HEAVY
+}
+
+enum ShiftType {
+  DAY
+  EVENING
+  NIGHT
+  ROTATING
+  FLEXIBLE
+}
+
+enum BodyPart {
+  HEAD_NECK
+  LEFT_SHOULDER
+  RIGHT_SHOULDER
+  UPPER_BACK
+  LOWER_BACK
+  LEFT_ELBOW
+  RIGHT_ELBOW
+  LEFT_WRIST_HAND
+  RIGHT_WRIST_HAND
+  CHEST
+  ABDOMEN
+  LEFT_HIP
+  RIGHT_HIP
+  LEFT_KNEE
+  RIGHT_KNEE
+  LEFT_ANKLE_FOOT
+  RIGHT_ANKLE_FOOT
+}
+
+enum PainSeverity {
+  NONE
+  MILD
+  MODERATE
+  SEVERE
+}
+
+enum ProgramGoal {
+  PREVENTION
+  RECOVERY
+  STRENGTHENING
+  FLEXIBILITY
+  CONDITIONING
+}
+
+enum ExerciseDifficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum JobCategory {
+  DESK
+  LIGHT_PHYSICAL
+  HEAVY_PHYSICAL
+  DRIVING
+  HEALTHCARE
+  RETAIL
+  CONSTRUCTION
+  MANUFACTURING
+}
+
+enum WorkerProgramStatus {
+  ACTIVE
+  COMPLETED
+  PAUSED
+  CANCELLED
+}
+
+enum IncidentStatus {
+  OPEN
+  UNDER_REVIEW
+  RTW_IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum IncidentSeverity {
+  MINOR
+  MODERATE
+  SERIOUS
+  CRITICAL
+}
+
+enum RTWMilestoneType {
+  LIGHT_DUTY
+  MODIFIED_DUTY
+  FULL_DUTY
+}
+
+enum RTWMilestoneStatus {
+  PENDING
+  IN_PROGRESS
+  CLEARED
+  DELAYED
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  PUSH
+}
+
+enum NotificationType {
+  CHECKIN_REMINDER
+  EXERCISE_REMINDER
+  PAIN_ESCALATION
+  PROGRAM_ASSIGNED
+  INCIDENT_UPDATE
+  RTW_MILESTONE
+  RISK_THRESHOLD_BREACH
+  OSHA_DEADLINE
+  STREAK_MILESTONE
+  SYSTEM
+}
+
+enum RiskEntityType {
+  WORKER
+  DEPARTMENT
+  ORGANIZATION
+}
+
+enum SubscriptionTier {
+  STARTER
+  GROWTH
+  ENTERPRISE
+}
+
+enum AlertStatus {
+  ACTIVE
+  ACKNOWLEDGED
+  RESOLVED
+}
+
+// ─── Core Entities ────────────────────────────────────────────────────────────
+
+model Organization {
+  id               String           @id @default(cuid())
+  name             String
+  industry         String?
+  logoUrl          String?
+  subscriptionTier SubscriptionTier @default(STARTER)
+  maxWorkers       Int              @default(50)
+  isActive         Boolean          @default(true)
+  settings         Json             @default("{}")
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  departments  Department[]
+  users        User[]
+  programs     Program[]
+  riskScores   RiskScore[]
+  incidents    Incident[]
+  alerts       Alert[]
+  auditLogs    AuditLog[]
+  inviteTokens InviteToken[]
+
+  @@map("organizations")
+}
+
+model Department {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+  location       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  users        User[]
+  riskScores   RiskScore[]
+
+  @@map("departments")
+}
+
+model User {
+  id             String    @id @default(cuid())
+  organizationId String
+  departmentId   String?
+  email          String    @unique
+  passwordHash   String?
+  firstName      String
+  lastName       String
+  role           Role      @default(WORKER)
+  avatarUrl      String?
+  isOnboarded    Boolean   @default(false)
+  isActive       Boolean   @default(true)
+  isMfaEnabled   Boolean   @default(false)
+  mfaSecret      String?
+  googleId       String?   @unique
+  lastLoginAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization      Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  department        Department?   @relation(fields: [departmentId], references: [id])
+  jobProfile        JobProfile?
+  checkIns          DailyCheckin[]
+  workerPrograms    WorkerProgram[]
+  incidents         Incident[]     @relation("WorkerIncidents")
+  reportedIncidents Incident[]     @relation("ReportedIncidents")
+  notifications     Notification[]
+  auditLogs         AuditLog[]
+  refreshTokens     RefreshToken[]
+  assignedPrograms  WorkerProgram[] @relation("AssignedBy")
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model InviteToken {
+  id             String    @id @default(cuid())
+  organizationId String
+  email          String
+  role           Role      @default(WORKER)
+  token          String    @unique
+  usedAt         DateTime?
+  expiresAt      DateTime
+  createdAt      DateTime  @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("invite_tokens")
+}
+
+model JobProfile {
+  id                  String              @id @default(cuid())
+  userId              String              @unique
+  title               String
+  physicalDemandLevel PhysicalDemandLevel @default(MEDIUM)
+  shiftType           ShiftType           @default(DAY)
+  jobCategory         JobCategory         @default(DESK)
+  primaryRisks        String[]
+  yearsInRole         Int?
+  hoursPerDay         Float?
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("job_profiles")
+}
+
+// ─── Check-ins ────────────────────────────────────────────────────────────────
+
+model DailyCheckin {
+  id            String       @id @default(cuid())
+  userId        String
+  date          DateTime     @db.Date
+  overallStatus PainSeverity @default(NONE)
+  note          String?
+  completedAt   DateTime     @default(now())
+  createdAt     DateTime     @default(now())
+
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bodyAreas BodyAreaEntry[]
+
+  @@unique([userId, date])
+  @@map("daily_checkins")
+}
+
+model BodyAreaEntry {
+  id              String       @id @default(cuid())
+  checkinId       String
+  bodyPart        BodyPart
+  intensity       Int
+  severity        PainSeverity @default(NONE)
+  taskCorrelation String?
+  note            String?
+
+  checkin DailyCheckin @relation(fields: [checkinId], references: [id], onDelete: Cascade)
+
+  @@map("body_area_entries")
+}
+
+// ─── Exercises & Programs ─────────────────────────────────────────────────────
+
+model Exercise {
+  id           String             @id @default(cuid())
+  name         String
+  description  String
+  bodyRegions  BodyPart[]
+  jobCategories JobCategory[]
+  goals        ProgramGoal[]
+  difficulty   ExerciseDifficulty @default(BEGINNER)
+  durationSec  Int                @default(60)
+  mediaUrl     String?
+  thumbnailUrl String?
+  instructions String[]
+  isActive     Boolean            @default(true)
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  programExercises ProgramExercise[]
+
+  @@map("exercises")
+}
+
+model Program {
+  id             String      @id @default(cuid())
+  organizationId String?
+  name           String
+  description    String?
+  jobCategory    JobCategory
+  bodyRegions    BodyPart[]
+  goal           ProgramGoal
+  durationWeeks  Int         @default(4)
+  isTemplate     Boolean     @default(false)
+  createdById    String?
+  isActive       Boolean     @default(true)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  organization     Organization?     @relation(fields: [organizationId], references: [id])
+  programExercises ProgramExercise[]
+  workerPrograms   WorkerProgram[]
+
+  @@map("programs")
+}
+
+model ProgramExercise {
+  id          String  @id @default(cuid())
+  programId   String
+  exerciseId  String
+  order       Int
+  sets        Int     @default(3)
+  reps        Int?
+  durationSec Int?
+  restSec     Int     @default(60)
+  notes       String?
+
+  program  Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  exercise Exercise @relation(fields: [exerciseId], references: [id])
+
+  @@unique([programId, order])
+  @@map("program_exercises")
+}
+
+model WorkerProgram {
+  id           String              @id @default(cuid())
+  userId       String
+  programId    String
+  assignedById String?
+  startDate    DateTime            @default(now())
+  endDate      DateTime?
+  status       WorkerProgramStatus @default(ACTIVE)
+  notes        String?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  program     Program      @relation(fields: [programId], references: [id])
+  assignedBy  User?        @relation("AssignedBy", fields: [assignedById], references: [id])
+  sessionLogs SessionLog[]
+
+  @@map("worker_programs")
+}
+
+model SessionLog {
+  id                 String   @id @default(cuid())
+  workerProgramId    String
+  date               DateTime @default(now())
+  exercisesCompleted Int      @default(0)
+  exercisesTotal     Int      @default(0)
+  durationMin        Float?
+  notes              String?
+  createdAt          DateTime @default(now())
+
+  workerProgram WorkerProgram @relation(fields: [workerProgramId], references: [id], onDelete: Cascade)
+
+  @@map("session_logs")
+}
+
+// ─── Risk Engine ──────────────────────────────────────────────────────────────
+
+model RiskScore {
+  id             String         @id @default(cuid())
+  entityType     RiskEntityType
+  entityId       String
+  organizationId String
+  departmentId   String?
+  score          Float
+  factors        Json           @default("[]")
+  computedAt     DateTime       @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  department   Department?  @relation(fields: [departmentId], references: [id])
+
+  @@index([entityType, entityId])
+  @@index([organizationId, computedAt])
+  @@map("risk_scores")
+}
+
+model Alert {
+  id             String      @id @default(cuid())
+  organizationId String
+  departmentId   String?
+  type           String
+  title          String
+  message        String
+  threshold      Float?
+  currentValue   Float?
+  status         AlertStatus @default(ACTIVE)
+  acknowledgedBy String?
+  acknowledgedAt DateTime?
+  resolvedAt     DateTime?
+  createdAt      DateTime    @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("alerts")
+}
+
+// ─── Incidents & RTW ──────────────────────────────────────────────────────────
+
+model Incident {
+  id                String           @id @default(cuid())
+  userId            String
+  organizationId    String
+  reportedById      String
+  bodyPart          BodyPart
+  injuryType        String
+  severity          IncidentSeverity @default(MODERATE)
+  status            IncidentStatus   @default(OPEN)
+  incidentDate      DateTime
+  taskAtTime        String?
+  description       String?
+  witness           String?
+  initialAssessment String?
+  isOshaRecordable  Boolean          @default(false)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  worker        User           @relation("WorkerIncidents", fields: [userId], references: [id])
+  reportedBy    User           @relation("ReportedIncidents", fields: [reportedById], references: [id])
+  organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  rtwMilestones RTWMilestone[]
+
+  @@map("incidents")
+}
+
+model RTWMilestone {
+  id            String             @id @default(cuid())
+  incidentId    String
+  milestoneType RTWMilestoneType
+  status        RTWMilestoneStatus @default(PENDING)
+  targetDate    DateTime?
+  clearedAt     DateTime?
+  clearedById   String?
+  notes         String?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  incident Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+
+  @@map("rtw_milestones")
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+model Notification {
+  id        String              @id @default(cuid())
+  userId    String
+  type      NotificationType
+  channel   NotificationChannel @default(IN_APP)
+  title     String
+  message   String
+  data      Json                @default("{}")
+  isRead    Boolean             @default(false)
+  readAt    DateTime?
+  sentAt    DateTime            @default(now())
+  createdAt DateTime            @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+// ─── Audit Log ────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  userId         String
+  organizationId String
+  action         String
+  resourceType   String
+  resourceId     String?
+  metadata       Json     @default("{}")
+  ipAddress      String?
+  userAgent      String?
+  timestamp      DateTime @default(now())
+
+  user         User         @relation(fields: [userId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, timestamp])
+  @@index([userId, timestamp])
+  @@map("audit_logs")
+}
