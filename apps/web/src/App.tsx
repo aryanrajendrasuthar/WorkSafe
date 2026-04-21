@@ -15,6 +15,9 @@ import InviteAccept from './pages/auth/InviteAccept';
 // Worker pages
 import WorkerDashboard from './pages/worker/Dashboard';
 import Onboarding from './pages/worker/Onboarding';
+import Checkin from './pages/worker/Checkin';
+import ExercisesPage from './pages/worker/Exercises';
+import ProgramsPage from './pages/worker/Programs';
 
 // Therapist pages
 import TherapistDashboard from './pages/therapist/Dashboard';
@@ -75,10 +78,11 @@ export default function App() {
             }
           >
             <Route path="dashboard" element={<WorkerDashboard />} />
-            <Route path="checkin" element={<div className="p-8 text-center text-gray-500">Check-in — Coming in Sprint 2</div>} />
-            <Route path="programs" element={<div className="p-8 text-center text-gray-500">Programs — Coming in Sprint 2</div>} />
-            <Route path="history" element={<div className="p-8 text-center text-gray-500">History — Coming in Sprint 2</div>} />
-            <Route path="notifications" element={<div className="p-8 text-center text-gray-500">Notifications — Coming in Sprint 2</div>} />
+            <Route path="checkin" element={<Checkin />} />
+            <Route path="exercises" element={<ExercisesPage />} />
+            <Route path="programs" element={<ProgramsPage />} />
+            <Route path="history" element={<div className="p-8 text-center text-gray-500">History — Coming in Sprint 3</div>} />
+            <Route path="notifications" element={<div className="p-8 text-center text-gray-500">Notifications — Coming in Sprint 3</div>} />
           </Route>
 
           {/* Therapist routes */}

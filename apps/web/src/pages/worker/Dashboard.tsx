@@ -1,384 +1,228 @@
 import { useQuery } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
+import { Flame, CheckCircle, Activity, Trophy, Plus, ChevronRight, Calendar, Target } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import {
-  Flame, TrendingUp, Dumbbell, Activity, CheckCircle2,
-  ArrowRight, Calendar, Award, Zap
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { CheckinHeatmap } from '@/components/CheckinHeatmap';
 
-const fadeUp = {
-  initial: { opacity: 0, y: 16 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.4, ease: 'easeOut' },
+const BODY_COLORS: Record<string, string> = {
+  LOWER_BACK: '#f97316', UPPER_BACK: '#8b5cf6', LEFT_SHOULDER: '#3b82f6',
+  RIGHT_SHOULDER: '#06b6d4', HEAD_NECK: '#10b981', LEFT_WRIST_HAND: '#f59e0b',
+  RIGHT_WRIST_HAND: '#ef4444',
 };
 
-interface WorkerStats {
-  checkinCount: number;
-  currentStreak: number;
-  activePrograms: Array<{
-    id: string;
-    program: { id: string; name: string; goal: string; durationWeeks: number };
-    sessionLogs: Array<{ date: string }>;
-  }>;
-}
+const BODY_LABELS: Record<string, string> = {
+  LOWER_BACK: 'Lower Back', UPPER_BACK: 'Upper Back', LEFT_SHOULDER: 'L. Shoulder',
+  RIGHT_SHOULDER: 'R. Shoulder', HEAD_NECK: 'Neck', LEFT_WRIST_HAND: 'L. Wrist',
+  RIGHT_WRIST_HAND: 'R. Wrist',
+};
 
 export default function WorkerDashboard() {
   const user = useAuthStore((s) => s.user);
 
-  const { data: stats, isLoading: statsLoading } = useQuery<WorkerStats>({
-    queryKey: ['worker-stats'],
-    queryFn: async () => {
-      const res = await api.get('/workers/stats');
-      return res.data.data;
-    },
+  const { data: stats } = useQuery({
+    queryKey: ['worker', 'stats'],
+    queryFn: () => api.get('/workers/stats').then((r) => r.data.data),
   });
 
-  const hasCheckedInToday = false; // Will be computed from check-in data in Sprint 2
+  const { data: todayCheckin } = useQuery({
+    queryKey: ['checkin', 'today'],
+    queryFn: () => api.get('/checkins/today').then((r) => r.data.data),
+  });
 
-  const timeOfDay = new Date().getHours();
-  const greeting = timeOfDay < 12 ? 'Good morning' : timeOfDay < 17 ? 'Good afternoon' : 'Good evening';
+  const { data: trendData = [] } = useQuery({
+    queryKey: ['checkin', 'trend'],
+    queryFn: () => api.get('/checkins/trend?days=30').then((r) => r.data.data),
+  });
+
+  const { data: historyData = [] } = useQuery({
+    queryKey: ['checkin', 'history'],
+    queryFn: () => api.get('/checkins/history?days=90').then((r) => r.data.data),
+  });
+
+  const { data: programs = [] } = useQuery({
+    queryKey: ['programs', 'my'],
+    queryFn: () => api.get('/programs/my').then((r) => r.data.data),
+  });
+
+  const streak = stats?.streak ?? 0;
+  const totalCheckins = stats?.totalCheckins ?? 0;
+  const activePrograms = programs.length;
+
+  const trendKeys = trendData.length > 0
+    ? Object.keys(trendData[0]).filter((k) => k !== 'date').slice(0, 4)
+    : [];
+
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20 lg:pb-6">
       {/* Header */}
-      <motion.div {...fadeUp}>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-              {greeting}, {user?.firstName}! 👋
-            </h1>
-            <p className="text-gray-500 mt-1">
-              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-            </p>
-          </div>
-          {!hasCheckedInToday && (
-            <Link to="/worker/checkin">
-              <Button variant="brand" size="lg" className="animate-pulse-glow">
-                <Activity className="w-5 h-5" />
-                Daily Check-in
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </Link>
-          )}
-          {hasCheckedInToday && (
-            <div className="flex items-center gap-2 text-green-600 font-medium">
-              <CheckCircle2 className="w-5 h-5" />
-              Checked in today!
-            </div>
-          )}
-        </div>
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+        <h1 className="text-2xl font-bold text-gray-900">{greeting}, {user?.firstName} 👋</h1>
+        <p className="text-gray-500 text-sm mt-0.5">
+          {todayCheckin ? 'Check-in done for today ✓' : "Don't forget your daily check-in"}
+        </p>
       </motion.div>
 
-      {/* Stats row */}
-      <motion.div
-        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.1 }}
-      >
-        <StatCard
-          icon={Flame}
-          iconColor="text-orange-500"
-          iconBg="bg-orange-50"
-          label="Current Streak"
-          value={statsLoading ? '—' : `${stats?.currentStreak ?? 0} days`}
-          sub={stats?.currentStreak && stats.currentStreak >= 7 ? '🔥 On fire!' : 'Keep going!'}
-        />
-        <StatCard
-          icon={Calendar}
-          iconColor="text-blue-500"
-          iconBg="bg-blue-50"
-          label="Total Check-ins"
-          value={statsLoading ? '—' : String(stats?.checkinCount ?? 0)}
-          sub="All time"
-        />
-        <StatCard
-          icon={Dumbbell}
-          iconColor="text-purple-500"
-          iconBg="bg-purple-50"
-          label="Active Programs"
-          value={statsLoading ? '—' : String(stats?.activePrograms?.length ?? 0)}
-          sub="In progress"
-        />
-        <StatCard
-          icon={Award}
-          iconColor="text-amber-500"
-          iconBg="bg-amber-50"
-          label="Badges Earned"
-          value="3"
-          sub="2 pending"
-        />
-      </motion.div>
-
-      {/* Main content grid */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Pain trend chart */}
-        <motion.div
-          className="lg:col-span-2"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-        >
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base">Pain Trend (Last 30 Days)</CardTitle>
-                <Badge variant="outline" className="text-xs">Per body area</Badge>
+      {/* Check-in CTA */}
+      {!todayCheckin && (
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+          <Link to="/worker/checkin">
+            <div className="bg-gradient-to-r from-brand-500 to-brand-600 rounded-2xl p-5 text-white flex items-center justify-between shadow-lg shadow-brand-200">
+              <div>
+                <p className="font-bold text-lg">Daily Check-in</p>
+                <p className="text-brand-100 text-sm">Takes 60 seconds · Keep your streak alive</p>
               </div>
-            </CardHeader>
-            <CardContent>
-              <PainTrendChart />
-            </CardContent>
-          </Card>
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                <Plus className="w-6 h-6" />
+              </div>
+            </div>
+          </Link>
         </motion.div>
+      )}
 
-        {/* Streak calendar */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.25 }}
-        >
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {[
+          { icon: Flame, label: 'Day Streak', value: streak, color: 'text-orange-500', bg: 'bg-orange-50' },
+          { icon: CheckCircle, label: 'Total Check-ins', value: totalCheckins, color: 'text-green-600', bg: 'bg-green-50' },
+          { icon: Target, label: 'Active Programs', value: activePrograms, color: 'text-brand-600', bg: 'bg-brand-50' },
+          { icon: Trophy, label: 'Best Streak', value: stats?.bestStreak ?? streak, color: 'text-purple-600', bg: 'bg-purple-50' },
+        ].map((stat, i) => (
+          <motion.div key={stat.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+            <Card>
+              <CardContent className="p-4">
+                <div className={`w-9 h-9 ${stat.bg} rounded-xl flex items-center justify-center mb-2`}>
+                  <stat.icon className={`w-5 h-5 ${stat.color}`} />
+                </div>
+                <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
+                <div className="text-xs text-gray-500 mt-0.5">{stat.label}</div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Pain Trend Chart */}
+      {trendData.length > 0 && trendKeys.length > 0 && (
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <Card>
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
-                <Flame className="w-4 h-4 text-orange-500" />
-                Check-in Streak
+                <Activity className="w-4 h-4 text-brand-500" /> Pain Trend — Last 30 Days
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <StreakCalendar streak={stats?.currentStreak ?? 0} />
-
-              <div className="mt-4 space-y-2">
-                {[
-                  { label: '7-day streak', icon: '🔥', unlocked: (stats?.currentStreak ?? 0) >= 7 },
-                  { label: '30-day streak', icon: '⚡', unlocked: (stats?.currentStreak ?? 0) >= 30 },
-                  { label: '100-day streak', icon: '💎', unlocked: (stats?.currentStreak ?? 0) >= 100 },
-                ].map((badge) => (
-                  <div key={badge.label} className={`flex items-center gap-2 p-2 rounded-lg text-sm ${badge.unlocked ? 'bg-amber-50 border border-amber-100' : 'bg-gray-50 opacity-50'}`}>
-                    <span>{badge.icon}</span>
-                    <span className={badge.unlocked ? 'text-amber-700 font-medium' : 'text-gray-500'}>{badge.label}</span>
-                    {badge.unlocked && <CheckCircle2 className="w-4 h-4 text-amber-500 ml-auto" />}
-                  </div>
+              <ResponsiveContainer width="100%" height={180}>
+                <LineChart data={trendData} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#9ca3af' }} tickFormatter={(v) => v.slice(5)} interval="preserveStartEnd" />
+                  <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} domain={[0, 10]} ticks={[0, 5, 10]} />
+                  <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: '1px solid #e5e7eb' }} formatter={(v: any, name: string) => [v, BODY_LABELS[name] ?? name]} />
+                  {trendKeys.map((key) => (
+                    <Line key={key} type="monotone" dataKey={key} stroke={BODY_COLORS[key] ?? '#6b7280'} strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+              <div className="flex flex-wrap gap-3 mt-3">
+                {trendKeys.map((key) => (
+                  <span key={key} className="flex items-center gap-1.5 text-xs text-gray-500">
+                    <span className="w-3 h-1.5 rounded-full inline-block" style={{ background: BODY_COLORS[key] ?? '#6b7280' }} />
+                    {BODY_LABELS[key] ?? key}
+                  </span>
                 ))}
               </div>
             </CardContent>
           </Card>
         </motion.div>
-      </div>
+      )}
 
       {/* Active Programs */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.3 }}
-      >
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
+      {programs.length > 0 && (
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base">Active Programs</CardTitle>
+                <Link to="/worker/programs" className="text-xs text-brand-600 font-medium hover:text-brand-700">View all →</Link>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {programs.slice(0, 2).map((wp: any) => (
+                <Link key={wp.id} to="/worker/programs">
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                    <div className="w-9 h-9 bg-brand-100 rounded-xl flex items-center justify-center shrink-0">
+                      <Target className="w-5 h-5 text-brand-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 truncate">{wp.program.name}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Progress value={wp.completionRate} className="h-1.5 flex-1" />
+                        <span className="text-xs text-gray-500 shrink-0">{wp.completionRate}%</span>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />
+                  </div>
+                </Link>
+              ))}
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+      {/* Check-in Heatmap */}
+      {historyData.length > 0 && (
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <Card>
+            <CardHeader className="pb-2">
               <CardTitle className="text-base flex items-center gap-2">
-                <Dumbbell className="w-4 h-4 text-purple-500" />
-                Active Exercise Programs
+                <Calendar className="w-4 h-4 text-brand-500" /> Check-in History
               </CardTitle>
-              <Link to="/worker/programs">
-                <Button variant="ghost" size="sm" className="text-xs">
-                  View all <ArrowRight className="w-3 h-3" />
-                </Button>
-              </Link>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <div className="space-y-3">
-                {[1, 2].map((i) => (
-                  <div key={i} className="h-20 bg-gray-100 rounded-xl animate-pulse" />
-                ))}
-              </div>
-            ) : stats?.activePrograms?.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Dumbbell className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p className="text-sm">No programs assigned yet</p>
-                <p className="text-xs mt-1">Your therapist will assign a program soon</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {stats?.activePrograms?.map((wp) => (
-                  <ProgramCard key={wp.id} workerProgram={wp} />
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              <CheckinHeatmap data={historyData} weeks={18} />
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+      {/* Quick actions */}
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}>
+        <div className="grid grid-cols-2 gap-3">
+          <Link to="/worker/exercises">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="w-9 h-9 bg-green-50 rounded-xl flex items-center justify-center">
+                  <Activity className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">Exercises</p>
+                  <p className="text-xs text-gray-500">Browse library</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link to="/worker/programs">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="p-4 flex items-center gap-3">
+                <div className="w-9 h-9 bg-purple-50 rounded-xl flex items-center justify-center">
+                  <Target className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">Programs</p>
+                  <p className="text-xs text-gray-500">My sessions</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
       </motion.div>
-
-      {/* Quick Actions */}
-      <motion.div
-        className="grid sm:grid-cols-3 gap-4"
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.35 }}
-      >
-        <Link to="/worker/checkin" className="block">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer group border-dashed">
-            <CardContent className="flex items-center gap-4 p-5">
-              <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform">
-                <Activity className="w-6 h-6 text-blue-600" />
-              </div>
-              <div>
-                <div className="font-semibold text-gray-900">Daily Check-in</div>
-                <div className="text-xs text-gray-500">60 seconds · Updates your risk</div>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link to="/worker/programs" className="block">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer group border-dashed">
-            <CardContent className="flex items-center gap-4 p-5">
-              <div className="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform">
-                <Dumbbell className="w-6 h-6 text-purple-600" />
-              </div>
-              <div>
-                <div className="font-semibold text-gray-900">Start Exercise</div>
-                <div className="text-xs text-gray-500">Continue your program</div>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link to="/worker/history" className="block">
-          <Card className="hover:shadow-md transition-shadow cursor-pointer group border-dashed">
-            <CardContent className="flex items-center gap-4 p-5">
-              <div className="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform">
-                <TrendingUp className="w-6 h-6 text-green-600" />
-              </div>
-              <div>
-                <div className="font-semibold text-gray-900">View History</div>
-                <div className="text-xs text-gray-500">Your pain trend data</div>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-      </motion.div>
-    </div>
-  );
-}
-
-function StatCard({ icon: Icon, iconColor, iconBg, label, value, sub }: {
-  icon: React.ElementType;
-  iconColor: string;
-  iconBg: string;
-  label: string;
-  value: string;
-  sub: string;
-}) {
-  return (
-    <Card>
-      <CardContent className="p-5">
-        <div className={`w-10 h-10 ${iconBg} rounded-xl flex items-center justify-center mb-3`}>
-          <Icon className={`w-5 h-5 ${iconColor}`} />
-        </div>
-        <div className="text-2xl font-bold text-gray-900">{value}</div>
-        <div className="text-sm text-gray-600 mt-0.5">{label}</div>
-        <div className="text-xs text-gray-400 mt-0.5">{sub}</div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function ProgramCard({ workerProgram }: { workerProgram: { id: string; program: { name: string; goal: string; durationWeeks: number }; sessionLogs: Array<{ date: string }> } }) {
-  const progress = Math.min(100, Math.round((workerProgram.sessionLogs.length / (workerProgram.program.durationWeeks * 5)) * 100));
-
-  return (
-    <div className="flex items-center gap-4 p-4 rounded-xl border hover:bg-gray-50 transition-colors">
-      <div className="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center shrink-0">
-        <Dumbbell className="w-5 h-5 text-purple-600" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2 mb-1">
-          <span className="font-medium text-gray-900 text-sm truncate">{workerProgram.program.name}</span>
-          <span className="text-xs text-gray-500 shrink-0">{progress}%</span>
-        </div>
-        <Progress value={progress} className="h-1.5" />
-        <div className="flex items-center gap-3 mt-1.5">
-          <Badge variant="outline" className="text-xs capitalize py-0">
-            {workerProgram.program.goal.toLowerCase().replace('_', ' ')}
-          </Badge>
-          <span className="text-xs text-gray-400">{workerProgram.program.durationWeeks} weeks</span>
-        </div>
-      </div>
-      <Link to={`/worker/programs/${workerProgram.id}`}>
-        <Button variant="ghost" size="sm">
-          <Zap className="w-4 h-4" />
-        </Button>
-      </Link>
-    </div>
-  );
-}
-
-function PainTrendChart() {
-  const data = Array.from({ length: 30 }, (_, i) => ({
-    day: `Day ${i + 1}`,
-    lowerBack: Math.max(0, Math.min(10, 5 + Math.sin(i * 0.3) * 2 + (Math.random() - 0.5) * 1.5)),
-    shoulders: Math.max(0, Math.min(10, 3 + Math.cos(i * 0.4) * 1.5 + (Math.random() - 0.5) * 1)),
-    neck: Math.max(0, Math.min(10, 2 + Math.sin(i * 0.5) * 1 + (Math.random() - 0.5) * 0.8)),
-  })).map((d) => ({
-    ...d,
-    lowerBack: parseFloat(d.lowerBack.toFixed(1)),
-    shoulders: parseFloat(d.shoulders.toFixed(1)),
-    neck: parseFloat(d.neck.toFixed(1)),
-  }));
-
-  return (
-    <ResponsiveContainer width="100%" height={200}>
-      <LineChart data={data} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-        <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#9ca3af' }} tickFormatter={(v) => v.replace('Day ', '')} interval={4} />
-        <YAxis domain={[0, 10]} tick={{ fontSize: 10, fill: '#9ca3af' }} />
-        <Tooltip
-          contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '12px' }}
-          labelFormatter={(v) => `Day ${v.replace('Day ', '')}`}
-        />
-        <Line type="monotone" dataKey="lowerBack" stroke="#f97316" strokeWidth={2} dot={false} name="Lower Back" />
-        <Line type="monotone" dataKey="shoulders" stroke="#8b5cf6" strokeWidth={2} dot={false} name="Shoulders" />
-        <Line type="monotone" dataKey="neck" stroke="#06b6d4" strokeWidth={2} dot={false} name="Neck" />
-      </LineChart>
-    </ResponsiveContainer>
-  );
-}
-
-function StreakCalendar({ streak }: { streak: number }) {
-  const today = new Date();
-  const days = Array.from({ length: 35 }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() - (34 - i));
-    const isInStreak = i >= 35 - streak && streak > 0;
-    const isToday = i === 34;
-    return { date: d, isInStreak, isToday };
-  });
-
-  return (
-    <div className="grid grid-cols-7 gap-1">
-      {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
-        <div key={`${d}-${i}`} className="text-center text-xs font-medium text-gray-400 py-1">{d}</div>
-      ))}
-      {days.map((day, i) => (
-        <div
-          key={i}
-          title={day.date.toLocaleDateString()}
-          className={`
-            aspect-square rounded-md flex items-center justify-center text-xs transition-colors
-            ${day.isToday ? 'ring-2 ring-brand-500' : ''}
-            ${day.isInStreak ? 'bg-orange-400 text-white' : 'bg-gray-100 text-gray-400'}
-          `}
-        >
-          {day.date.getDate()}
-        </div>
-      ))}
     </div>
   );
 }
