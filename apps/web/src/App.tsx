@@ -21,6 +21,11 @@ import ProgramsPage from './pages/worker/Programs';
 
 // Therapist pages
 import TherapistDashboard from './pages/therapist/Dashboard';
+import TherapistWorkers from './pages/therapist/Workers';
+import WorkerDetail from './pages/therapist/WorkerDetail';
+import TherapistPrograms from './pages/therapist/Programs';
+import ProgramBuilder from './pages/therapist/ProgramBuilder';
+import TherapistIncidents from './pages/therapist/Incidents';
 
 // Safety Manager pages
 import SafetyDashboard from './pages/safety-manager/Dashboard';
@@ -95,10 +100,12 @@ export default function App() {
             }
           >
             <Route path="dashboard" element={<TherapistDashboard />} />
-            <Route path="workers" element={<div className="p-8 text-center text-gray-500">Workers — Coming in Sprint 3</div>} />
-            <Route path="programs" element={<div className="p-8 text-center text-gray-500">Programs — Coming in Sprint 3</div>} />
-            <Route path="escalations" element={<div className="p-8 text-center text-gray-500">Escalations — Coming in Sprint 3</div>} />
-            <Route path="incidents" element={<div className="p-8 text-center text-gray-500">Incidents — Coming in Sprint 3</div>} />
+            <Route path="workers" element={<TherapistWorkers />} />
+            <Route path="workers/:id" element={<WorkerDetail />} />
+            <Route path="programs" element={<TherapistPrograms />} />
+            <Route path="programs/new" element={<ProgramBuilder />} />
+            <Route path="incidents" element={<TherapistIncidents />} />
+            <Route path="escalations" element={<div className="p-8 text-center text-gray-500">Escalations — Coming in Sprint 4</div>} />
             <Route path="notifications" element={<div className="p-8 text-center text-gray-500">Notifications — Coming in Sprint 3</div>} />
           </Route>
 
