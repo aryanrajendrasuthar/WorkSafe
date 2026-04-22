@@ -99,11 +99,16 @@ export default function TherapistWorkers() {
                     </Avatar>
 
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-semibold text-gray-900">{w.firstName} {w.lastName}</p>
                         {w.trend === 'up' && <TrendingUp className="w-3.5 h-3.5 text-red-500" />}
                         {w.trend === 'down' && <TrendingDown className="w-3.5 h-3.5 text-green-500" />}
                         {w.trend === 'stable' && <Minus className="w-3.5 h-3.5 text-gray-400" />}
+                        {w.predictedToEscalate && (
+                          <span className="text-[9px] bg-red-100 text-red-700 border border-red-200 px-1.5 py-0.5 rounded-full font-semibold tracking-wide">
+                            ⚡ ESCALATION RISK
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs text-gray-500 mt-0.5">
                         {w.department ?? 'No dept'} · {w.jobTitle ?? 'No title'} · {w.checkinCount} check-ins

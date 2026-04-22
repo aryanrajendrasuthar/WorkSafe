@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
@@ -6,45 +7,57 @@ import { ProtectedRoute } from './router/ProtectedRoute';
 import { AppLayout } from './components/layout/AppLayout';
 import { useAuthStore } from './store/auth.store';
 
-// Public pages
+// Public pages (kept eager — tiny, always needed)
 import Landing from './pages/Landing';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import InviteAccept from './pages/auth/InviteAccept';
 
-// Worker pages
-import WorkerDashboard from './pages/worker/Dashboard';
-import Onboarding from './pages/worker/Onboarding';
-import Checkin from './pages/worker/Checkin';
-import ExercisesPage from './pages/worker/Exercises';
-import ProgramsPage from './pages/worker/Programs';
+// Worker pages — lazy loaded
+const WorkerDashboard = lazy(() => import('./pages/worker/Dashboard'));
+const Onboarding = lazy(() => import('./pages/worker/Onboarding'));
+const Checkin = lazy(() => import('./pages/worker/Checkin'));
+const ExercisesPage = lazy(() => import('./pages/worker/Exercises'));
+const ProgramsPage = lazy(() => import('./pages/worker/Programs'));
 
-// Therapist pages
-import TherapistDashboard from './pages/therapist/Dashboard';
-import TherapistWorkers from './pages/therapist/Workers';
-import WorkerDetail from './pages/therapist/WorkerDetail';
-import TherapistPrograms from './pages/therapist/Programs';
-import ProgramBuilder from './pages/therapist/ProgramBuilder';
-import TherapistIncidents from './pages/therapist/Incidents';
-import IncidentDetail from './pages/therapist/IncidentDetail';
+// Therapist pages — lazy loaded
+const TherapistDashboard = lazy(() => import('./pages/therapist/Dashboard'));
+const TherapistWorkers = lazy(() => import('./pages/therapist/Workers'));
+const WorkerDetail = lazy(() => import('./pages/therapist/WorkerDetail'));
+const TherapistPrograms = lazy(() => import('./pages/therapist/Programs'));
+const ProgramBuilder = lazy(() => import('./pages/therapist/ProgramBuilder'));
+const TherapistIncidents = lazy(() => import('./pages/therapist/Incidents'));
+const IncidentDetail = lazy(() => import('./pages/therapist/IncidentDetail'));
 
-// Safety Manager pages
-import SafetyDashboard from './pages/safety-manager/Dashboard';
-import SafetyDepartments from './pages/safety-manager/Departments';
-import DepartmentDetail from './pages/safety-manager/DepartmentDetail';
-import SafetyAlerts from './pages/safety-manager/Alerts';
-import OshaReports from './pages/safety-manager/OshaReports';
+// Safety Manager pages — lazy loaded
+const SafetyDashboard = lazy(() => import('./pages/safety-manager/Dashboard'));
+const SafetyDepartments = lazy(() => import('./pages/safety-manager/Departments'));
+const DepartmentDetail = lazy(() => import('./pages/safety-manager/DepartmentDetail'));
+const SafetyAlerts = lazy(() => import('./pages/safety-manager/Alerts'));
+const OshaReports = lazy(() => import('./pages/safety-manager/OshaReports'));
 
-// HR Admin pages
-import HRDashboard from './pages/hr-admin/Dashboard';
-import HREmployees from './pages/hr-admin/Employees';
-import HRDepartments from './pages/hr-admin/DepartmentsPage';
-import HRInvites from './pages/hr-admin/Invites';
+// HR Admin pages — lazy loaded
+const HRDashboard = lazy(() => import('./pages/hr-admin/Dashboard'));
+const HREmployees = lazy(() => import('./pages/hr-admin/Employees'));
+const HRDepartments = lazy(() => import('./pages/hr-admin/DepartmentsPage'));
+const HRInvites = lazy(() => import('./pages/hr-admin/Invites'));
 
-// Company Admin pages
-import CompanyAdminDashboard from './pages/company-admin/Dashboard';
-import AuditLogPage from './pages/company-admin/AuditLog';
-import BillingPage from './pages/company-admin/Billing';
+// Company Admin pages — lazy loaded
+const CompanyAdminDashboard = lazy(() => import('./pages/company-admin/Dashboard'));
+const AuditLogPage = lazy(() => import('./pages/company-admin/AuditLog'));
+const BillingPage = lazy(() => import('./pages/company-admin/Billing'));
+
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-[40vh]">
+      <div className="space-y-3 w-full max-w-sm">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-24 bg-gray-100 dark:bg-gray-800 rounded-2xl animate-pulse" style={{ animationDelay: `${i * 100}ms` }} />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function RootRedirect() {
   const { isAuthenticated, user } = useAuthStore();
@@ -66,6 +79,14 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        {/* Skip to content — accessibility */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:bg-brand-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:text-sm focus:font-medium"
+        >
+          Skip to content
+        </a>
+
         <Routes>
           {/* Public */}
           <Route path="/" element={<RootRedirect />} />
@@ -73,12 +94,14 @@ export default function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/invite/:token" element={<InviteAccept />} />
 
-          {/* Onboarding (requires auth, before main layout) */}
+          {/* Onboarding */}
           <Route
             path="/onboarding"
             element={
               <ProtectedRoute allowedRoles={['WORKER']}>
-                <Onboarding />
+                <Suspense fallback={<PageLoader />}>
+                  <Onboarding />
+                </Suspense>
               </ProtectedRoute>
             }
           />
@@ -92,12 +115,12 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route path="dashboard" element={<WorkerDashboard />} />
-            <Route path="checkin" element={<Checkin />} />
-            <Route path="exercises" element={<ExercisesPage />} />
-            <Route path="programs" element={<ProgramsPage />} />
-            <Route path="history" element={<div className="p-8 text-center text-gray-500">History — Coming in Sprint 3</div>} />
-            <Route path="notifications" element={<div className="p-8 text-center text-gray-500">Notifications — Coming in Sprint 3</div>} />
+            <Route path="dashboard" element={<Suspense fallback={<PageLoader />}><WorkerDashboard /></Suspense>} />
+            <Route path="checkin" element={<Suspense fallback={<PageLoader />}><Checkin /></Suspense>} />
+            <Route path="exercises" element={<Suspense fallback={<PageLoader />}><ExercisesPage /></Suspense>} />
+            <Route path="programs" element={<Suspense fallback={<PageLoader />}><ProgramsPage /></Suspense>} />
+            <Route path="history" element={<div className="p-8 text-center text-gray-500">History — Coming soon</div>} />
+            <Route path="notifications" element={<div className="p-8 text-center text-gray-500">Notifications — Coming soon</div>} />
           </Route>
 
           {/* Therapist routes */}
@@ -109,15 +132,15 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route path="dashboard" element={<TherapistDashboard />} />
-            <Route path="workers" element={<TherapistWorkers />} />
-            <Route path="workers/:id" element={<WorkerDetail />} />
-            <Route path="programs" element={<TherapistPrograms />} />
-            <Route path="programs/new" element={<ProgramBuilder />} />
-            <Route path="incidents" element={<TherapistIncidents />} />
-            <Route path="incidents/:id" element={<IncidentDetail />} />
-            <Route path="escalations" element={<div className="p-8 text-center text-gray-500">Escalations — Coming in Sprint 4</div>} />
-            <Route path="notifications" element={<div className="p-8 text-center text-gray-500">Notifications — Coming in Sprint 3</div>} />
+            <Route path="dashboard" element={<Suspense fallback={<PageLoader />}><TherapistDashboard /></Suspense>} />
+            <Route path="workers" element={<Suspense fallback={<PageLoader />}><TherapistWorkers /></Suspense>} />
+            <Route path="workers/:id" element={<Suspense fallback={<PageLoader />}><WorkerDetail /></Suspense>} />
+            <Route path="programs" element={<Suspense fallback={<PageLoader />}><TherapistPrograms /></Suspense>} />
+            <Route path="programs/new" element={<Suspense fallback={<PageLoader />}><ProgramBuilder /></Suspense>} />
+            <Route path="incidents" element={<Suspense fallback={<PageLoader />}><TherapistIncidents /></Suspense>} />
+            <Route path="incidents/:id" element={<Suspense fallback={<PageLoader />}><IncidentDetail /></Suspense>} />
+            <Route path="escalations" element={<div className="p-8 text-center text-gray-500 dark:text-gray-400">Escalations — Coming soon</div>} />
+            <Route path="notifications" element={<div className="p-8 text-center text-gray-500 dark:text-gray-400">Notifications — Coming soon</div>} />
           </Route>
 
           {/* Safety Manager routes */}
@@ -129,12 +152,12 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route path="dashboard" element={<SafetyDashboard />} />
-            <Route path="departments" element={<SafetyDepartments />} />
-            <Route path="departments/:id" element={<DepartmentDetail />} />
-            <Route path="alerts" element={<SafetyAlerts />} />
-            <Route path="incidents" element={<div className="p-8 text-center text-gray-500">Incidents — Coming in Sprint 5</div>} />
-            <Route path="reports" element={<OshaReports />} />
+            <Route path="dashboard" element={<Suspense fallback={<PageLoader />}><SafetyDashboard /></Suspense>} />
+            <Route path="departments" element={<Suspense fallback={<PageLoader />}><SafetyDepartments /></Suspense>} />
+            <Route path="departments/:id" element={<Suspense fallback={<PageLoader />}><DepartmentDetail /></Suspense>} />
+            <Route path="alerts" element={<Suspense fallback={<PageLoader />}><SafetyAlerts /></Suspense>} />
+            <Route path="incidents" element={<div className="p-8 text-center text-gray-500 dark:text-gray-400">Incidents — Coming soon</div>} />
+            <Route path="reports" element={<Suspense fallback={<PageLoader />}><OshaReports /></Suspense>} />
           </Route>
 
           {/* HR Admin routes */}
@@ -146,10 +169,10 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route path="dashboard" element={<HRDashboard />} />
-            <Route path="employees" element={<HREmployees />} />
-            <Route path="departments" element={<HRDepartments />} />
-            <Route path="invites" element={<HRInvites />} />
+            <Route path="dashboard" element={<Suspense fallback={<PageLoader />}><HRDashboard /></Suspense>} />
+            <Route path="employees" element={<Suspense fallback={<PageLoader />}><HREmployees /></Suspense>} />
+            <Route path="departments" element={<Suspense fallback={<PageLoader />}><HRDepartments /></Suspense>} />
+            <Route path="invites" element={<Suspense fallback={<PageLoader />}><HRInvites /></Suspense>} />
           </Route>
 
           {/* Company Admin routes */}
@@ -161,13 +184,13 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route path="dashboard" element={<CompanyAdminDashboard />} />
-            <Route path="users" element={<HREmployees />} />
-            <Route path="departments" element={<HRDepartments />} />
-            <Route path="billing" element={<BillingPage />} />
-            <Route path="settings" element={<div className="p-8 text-center text-gray-500">Settings — Coming in Sprint 6</div>} />
-            <Route path="audit" element={<AuditLogPage />} />
-            <Route path="overview" element={<SafetyDashboard />} />
+            <Route path="dashboard" element={<Suspense fallback={<PageLoader />}><CompanyAdminDashboard /></Suspense>} />
+            <Route path="users" element={<Suspense fallback={<PageLoader />}><HREmployees /></Suspense>} />
+            <Route path="departments" element={<Suspense fallback={<PageLoader />}><HRDepartments /></Suspense>} />
+            <Route path="billing" element={<Suspense fallback={<PageLoader />}><BillingPage /></Suspense>} />
+            <Route path="settings" element={<div className="p-8 text-center text-gray-500 dark:text-gray-400">Settings — Coming soon</div>} />
+            <Route path="audit" element={<Suspense fallback={<PageLoader />}><AuditLogPage /></Suspense>} />
+            <Route path="overview" element={<Suspense fallback={<PageLoader />}><SafetyDashboard /></Suspense>} />
           </Route>
 
           {/* Fallback */}

@@ -36,6 +36,8 @@ export class TherapistService {
       const riskScore = this.computeWorkerRisk(recentCheckins);
       const trend = this.computeTrend(recentCheckins);
 
+      const predictedToEscalate = trend === 'up' && (riskScore >= 30);
+
       return {
         id: w.id,
         firstName: w.firstName,
@@ -48,6 +50,7 @@ export class TherapistService {
         riskScore,
         riskLevel: this.riskLevel(riskScore),
         trend,
+        predictedToEscalate,
         lastCheckinDate: lastCheckin?.date ?? null,
         lastOverallStatus: lastCheckin?.overallStatus ?? null,
         checkinCount: recentCheckins.length,

@@ -293,6 +293,7 @@ model DailyCheckin {
   bodyAreas BodyAreaEntry[]
 
   @@unique([userId, date])
+  @@index([userId, date])
   @@map("daily_checkins")
 }
 
@@ -307,6 +308,8 @@ model BodyAreaEntry {
 
   checkin DailyCheckin @relation(fields: [checkinId], references: [id], onDelete: Cascade)
 
+  @@index([checkinId])
+  @@index([bodyPart])
   @@map("body_area_entries")
 }
 
@@ -352,6 +355,7 @@ model Program {
   programExercises ProgramExercise[]
   workerPrograms   WorkerProgram[]
 
+  @@index([organizationId])
   @@map("programs")
 }
 
@@ -390,6 +394,7 @@ model WorkerProgram {
   assignedBy  User?        @relation("AssignedBy", fields: [assignedById], references: [id])
   sessionLogs SessionLog[]
 
+  @@index([userId, status])
   @@map("worker_programs")
 }
 

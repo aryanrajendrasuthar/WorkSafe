@@ -3,10 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Activity, Dumbbell, AlertTriangle, Users, ClipboardList,
   FileBarChart, Bell, Settings, ChevronLeft, ShieldCheck, LogOut,
-  Building2, TrendingUp, UserCheck, X, Menu
+  Building2, TrendingUp, UserCheck, X, Menu, Moon, Sun,
 } from 'lucide-react';
 import { cn, getInitials } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth.store';
+import { useThemeStore } from '@/store/theme.store';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -71,6 +72,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ collapsed, onToggle, isMobileOpen, onMobileClose }: AppSidebarProps) {
   const { user, logout } = useAuthStore();
+  const { isDark, toggle: toggleTheme } = useThemeStore();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -126,8 +128,8 @@ export function AppSidebar({ collapsed, onToggle, isMobileOpen, onMobileClose }:
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
                 isActive
-                  ? 'bg-brand-50 text-brand-700 border border-brand-100'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+                  ? 'bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 border border-brand-100 dark:border-brand-800'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100',
                 collapsed && 'justify-center px-2'
               )}
               title={collapsed ? item.label : undefined}
@@ -169,13 +171,24 @@ export function AppSidebar({ collapsed, onToggle, isMobileOpen, onMobileClose }:
             </div>
           )}
           {!collapsed && (
-            <button
-              onClick={handleLogout}
-              className="text-gray-400 hover:text-red-500 transition-colors"
-              title="Sign out"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={toggleTheme}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1"
+                title={isDark ? 'Light mode' : 'Dark mode'}
+                aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
+              <button
+                onClick={handleLogout}
+                className="text-gray-400 hover:text-red-500 transition-colors p-1"
+                title="Sign out"
+                aria-label="Sign out"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -187,7 +200,7 @@ export function AppSidebar({ collapsed, onToggle, isMobileOpen, onMobileClose }:
       {/* Desktop sidebar */}
       <motion.aside
         className={cn(
-          'hidden lg:flex flex-col fixed left-0 top-0 h-full bg-white border-r z-40 transition-all duration-300',
+          'hidden lg:flex flex-col fixed left-0 top-0 h-full bg-white dark:bg-gray-900 border-r dark:border-gray-800 z-40 transition-all duration-300',
           collapsed ? 'w-16' : 'w-60'
         )}
         animate={{ width: collapsed ? 64 : 240 }}
@@ -208,7 +221,7 @@ export function AppSidebar({ collapsed, onToggle, isMobileOpen, onMobileClose }:
               onClick={onMobileClose}
             />
             <motion.aside
-              className="lg:hidden fixed left-0 top-0 h-full w-72 bg-white border-r z-50 flex flex-col"
+              className="lg:hidden fixed left-0 top-0 h-full w-72 bg-white dark:bg-gray-900 border-r dark:border-gray-800 z-50 flex flex-col"
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
@@ -233,7 +246,7 @@ export function TopBar({ onMobileMenuOpen, collapsed }: { onMobileMenuOpen: () =
 
   return (
     <header className={cn(
-      'fixed top-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b z-30 flex items-center justify-between px-4 sm:px-6 transition-all duration-300',
+      'fixed top-0 right-0 h-16 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b dark:border-gray-800 z-30 flex items-center justify-between px-4 sm:px-6 transition-all duration-300',
       collapsed ? 'left-16' : 'left-0 lg:left-60'
     )}>
       <button
