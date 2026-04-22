@@ -20,6 +20,13 @@ export class HrController {
     return this.hrService.getOrgStats(user.organizationId);
   }
 
+  @Patch('org')
+  @Roles('COMPANY_ADMIN')
+  @ApiOperation({ summary: 'Update organization details' })
+  updateOrg(@CurrentUser() user: any, @Body() body: { name?: string; industry?: string }) {
+    return this.hrService.updateOrg(user.organizationId, body);
+  }
+
   // ── Departments ─────────────────────────────────────────────────────────────
 
   @Get('departments')

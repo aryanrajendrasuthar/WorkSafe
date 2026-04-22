@@ -12,6 +12,11 @@ import Landing from './pages/Landing';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import InviteAccept from './pages/auth/InviteAccept';
+import GoogleCallback from './pages/auth/GoogleCallback';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
 
 // Worker pages — lazy loaded
 const WorkerDashboard = lazy(() => import('./pages/worker/Dashboard'));
@@ -19,6 +24,8 @@ const Onboarding = lazy(() => import('./pages/worker/Onboarding'));
 const Checkin = lazy(() => import('./pages/worker/Checkin'));
 const ExercisesPage = lazy(() => import('./pages/worker/Exercises'));
 const ProgramsPage = lazy(() => import('./pages/worker/Programs'));
+const WorkerHistory = lazy(() => import('./pages/worker/History'));
+const WorkerNotifications = lazy(() => import('./pages/worker/Notifications'));
 
 // Therapist pages — lazy loaded
 const TherapistDashboard = lazy(() => import('./pages/therapist/Dashboard'));
@@ -28,12 +35,15 @@ const TherapistPrograms = lazy(() => import('./pages/therapist/Programs'));
 const ProgramBuilder = lazy(() => import('./pages/therapist/ProgramBuilder'));
 const TherapistIncidents = lazy(() => import('./pages/therapist/Incidents'));
 const IncidentDetail = lazy(() => import('./pages/therapist/IncidentDetail'));
+const TherapistEscalations = lazy(() => import('./pages/therapist/Escalations'));
+const TherapistNotifications = lazy(() => import('./pages/therapist/Notifications'));
 
 // Safety Manager pages — lazy loaded
 const SafetyDashboard = lazy(() => import('./pages/safety-manager/Dashboard'));
 const SafetyDepartments = lazy(() => import('./pages/safety-manager/Departments'));
 const DepartmentDetail = lazy(() => import('./pages/safety-manager/DepartmentDetail'));
 const SafetyAlerts = lazy(() => import('./pages/safety-manager/Alerts'));
+const SafetyIncidents = lazy(() => import('./pages/safety-manager/Incidents'));
 const OshaReports = lazy(() => import('./pages/safety-manager/OshaReports'));
 
 // HR Admin pages — lazy loaded
@@ -46,6 +56,7 @@ const HRInvites = lazy(() => import('./pages/hr-admin/Invites'));
 const CompanyAdminDashboard = lazy(() => import('./pages/company-admin/Dashboard'));
 const AuditLogPage = lazy(() => import('./pages/company-admin/AuditLog'));
 const BillingPage = lazy(() => import('./pages/company-admin/Billing'));
+const CompanySettings = lazy(() => import('./pages/company-admin/Settings'));
 
 function PageLoader() {
   return (
@@ -93,6 +104,11 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/invite/:token" element={<InviteAccept />} />
+          <Route path="/auth/google/callback" element={<GoogleCallback />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
 
           {/* Onboarding */}
           <Route
@@ -119,8 +135,8 @@ export default function App() {
             <Route path="checkin" element={<Suspense fallback={<PageLoader />}><Checkin /></Suspense>} />
             <Route path="exercises" element={<Suspense fallback={<PageLoader />}><ExercisesPage /></Suspense>} />
             <Route path="programs" element={<Suspense fallback={<PageLoader />}><ProgramsPage /></Suspense>} />
-            <Route path="history" element={<div className="p-8 text-center text-gray-500">History — Coming soon</div>} />
-            <Route path="notifications" element={<div className="p-8 text-center text-gray-500">Notifications — Coming soon</div>} />
+            <Route path="history" element={<Suspense fallback={<PageLoader />}><WorkerHistory /></Suspense>} />
+            <Route path="notifications" element={<Suspense fallback={<PageLoader />}><WorkerNotifications /></Suspense>} />
           </Route>
 
           {/* Therapist routes */}
@@ -139,8 +155,8 @@ export default function App() {
             <Route path="programs/new" element={<Suspense fallback={<PageLoader />}><ProgramBuilder /></Suspense>} />
             <Route path="incidents" element={<Suspense fallback={<PageLoader />}><TherapistIncidents /></Suspense>} />
             <Route path="incidents/:id" element={<Suspense fallback={<PageLoader />}><IncidentDetail /></Suspense>} />
-            <Route path="escalations" element={<div className="p-8 text-center text-gray-500 dark:text-gray-400">Escalations — Coming soon</div>} />
-            <Route path="notifications" element={<div className="p-8 text-center text-gray-500 dark:text-gray-400">Notifications — Coming soon</div>} />
+            <Route path="escalations" element={<Suspense fallback={<PageLoader />}><TherapistEscalations /></Suspense>} />
+            <Route path="notifications" element={<Suspense fallback={<PageLoader />}><TherapistNotifications /></Suspense>} />
           </Route>
 
           {/* Safety Manager routes */}
@@ -156,7 +172,7 @@ export default function App() {
             <Route path="departments" element={<Suspense fallback={<PageLoader />}><SafetyDepartments /></Suspense>} />
             <Route path="departments/:id" element={<Suspense fallback={<PageLoader />}><DepartmentDetail /></Suspense>} />
             <Route path="alerts" element={<Suspense fallback={<PageLoader />}><SafetyAlerts /></Suspense>} />
-            <Route path="incidents" element={<div className="p-8 text-center text-gray-500 dark:text-gray-400">Incidents — Coming soon</div>} />
+            <Route path="incidents" element={<Suspense fallback={<PageLoader />}><SafetyIncidents /></Suspense>} />
             <Route path="reports" element={<Suspense fallback={<PageLoader />}><OshaReports /></Suspense>} />
           </Route>
 
@@ -188,9 +204,9 @@ export default function App() {
             <Route path="users" element={<Suspense fallback={<PageLoader />}><HREmployees /></Suspense>} />
             <Route path="departments" element={<Suspense fallback={<PageLoader />}><HRDepartments /></Suspense>} />
             <Route path="billing" element={<Suspense fallback={<PageLoader />}><BillingPage /></Suspense>} />
-            <Route path="settings" element={<div className="p-8 text-center text-gray-500 dark:text-gray-400">Settings — Coming soon</div>} />
+            <Route path="settings" element={<Suspense fallback={<PageLoader />}><CompanySettings /></Suspense>} />
             <Route path="audit" element={<Suspense fallback={<PageLoader />}><AuditLogPage /></Suspense>} />
-            <Route path="overview" element={<Suspense fallback={<PageLoader />}><SafetyDashboard /></Suspense>} />
+            <Route path="overview" element={<Navigate to="/safety/dashboard" replace />} />
           </Route>
 
           {/* Fallback */}

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -20,9 +20,16 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function Login() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const setAuth = useAuthStore((s) => s.setAuth);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (searchParams.get('error') === 'google_failed') {
+      setError('Google sign-in failed. Please try again or use email and password.');
+    }
+  }, [searchParams]);
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -143,7 +150,7 @@ export default function Login() {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
-                <a href="#" className="text-xs text-brand-600 hover:underline">Forgot password?</a>
+                <Link to="/forgot-password" className="text-xs text-brand-600 hover:underline">Forgot password?</Link>
               </div>
               <div className="relative">
                 <Input
@@ -207,10 +214,10 @@ export default function Login() {
           <div className="mt-6 p-3 bg-blue-50 rounded-lg border border-blue-100">
             <p className="text-xs font-semibold text-blue-700 mb-1.5">Demo credentials</p>
             <div className="grid grid-cols-2 gap-1 text-xs text-blue-600">
-              <span>worker@acme.com</span><span>Password123!</span>
-              <span>therapist@acme.com</span><span>Password123!</span>
-              <span>safety@acme.com</span><span>Password123!</span>
-              <span>admin@acme.com</span><span>Password123!</span>
+              <span>worker@demo.worksafe.com</span><span>Password123!</span>
+              <span>therapist@demo.worksafe.com</span><span>Password123!</span>
+              <span>safety@demo.worksafe.com</span><span>Password123!</span>
+              <span>admin@demo.worksafe.com</span><span>Password123!</span>
             </div>
           </div>
         </motion.div>

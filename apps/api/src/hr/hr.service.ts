@@ -94,14 +94,46 @@ export class HrService {
   // ── Org Stats ────────────────────────────────────────────────────────────────
 
   async getOrgStats(organizationId: string) {
-    const [totalUsers, departments, invites, org] = await Promise.all([
-      this.prisma.user.count({ where: { organizationId, isActive: true } }),
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const [totalWorkers, totalDepartments, totalInvites, activeWorkers, org] = await Promise.all([
+      this.prisma.user.count({ where: { organizationId, role: 'WORKER', isActive: true } }),
       this.prisma.department.count({ where: { organizationId } }),
-      this.prisma.inviteToken.count({ where: { organizationId, usedAt: null } }),
-      this.prisma.organization.findUnique({ where: { id: organizationId }, select: { name: true, subscriptionTier: true, maxWorkers: true } }),
+      this.prisma.inviteToken.count({ where: { organizationId, usedAt: null, expiresAt: { gt: new Date() } } }),
+      this.prisma.user.count({
+        where: {
+          organizationId,
+          role: 'WORKER',
+          isActive: true,
+          checkIns: { some: { date: { gte: thirtyDaysAgo } } },
+        },
+      }),
+      this.prisma.organization.findUnique({
+        where: { id: organizationId },
+        select: { id: true, name: true, industry: true, subscriptionTier: true, maxWorkers: true },
+      }),
     ]);
 
-    return { totalUsers, departments, pendingInvites: invites, org };
+    return {
+      totalWorkers,
+      totalDepartments,
+      totalInvites,
+      activeWorkers,
+      orgName: org?.name,
+      orgId: org?.id,
+      industry: org?.industry,
+      subscriptionTier: org?.subscriptionTier,
+      maxWorkers: org?.maxWorkers,
+    };
+  }
+
+  async updateOrg(organizationId: string, data: { name?: string; industry?: string }) {
+    return this.prisma.organization.update({
+      where: { id: organizationId },
+      data: { ...(data.name && { name: data.name }), ...(data.industry !== undefined && { industry: data.industry }) },
+      select: { id: true, name: true, industry: true, subscriptionTier: true },
+    });
   }
 
   // ── Audit Logs ───────────────────────────────────────────────────────────────

@@ -1,12 +1,58 @@
 import { motion } from 'framer-motion';
 import { Users, Building2, TrendingUp, CreditCard, Settings, ArrowRight, Shield, Activity } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
+import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '@/store/auth.store';
 
 export default function CompanyAdminDashboard() {
   const user = useAuthStore((s) => s.user);
+
+  const { data: stats } = useQuery({
+    queryKey: ['hr', 'stats'],
+    queryFn: () => api.get('/hr/stats').then((r) => r.data.data),
+  });
+
+  const { data: risk } = useQuery({
+    queryKey: ['risk', 'summary'],
+    queryFn: () => api.get('/risk/summary').then((r) => r.data.data),
+  });
+
+  const statCards = [
+    {
+      icon: Users,
+      label: 'Total Workers',
+      value: stats?.totalWorkers ?? '—',
+      sub: stats?.totalInvites ? `${stats.totalInvites} pending invite${stats.totalInvites !== 1 ? 's' : ''}` : 'Active accounts',
+      color: 'text-blue-600',
+      bg: 'bg-blue-50',
+    },
+    {
+      icon: Building2,
+      label: 'Departments',
+      value: stats?.totalDepartments ?? '—',
+      sub: 'Organizational units',
+      color: 'text-purple-600',
+      bg: 'bg-purple-50',
+    },
+    {
+      icon: Shield,
+      label: 'Org Risk Score',
+      value: risk?.orgRiskScore != null ? Math.round(risk.orgRiskScore) : '—',
+      sub: risk?.orgRiskLevel ?? 'Not computed yet',
+      color: risk?.orgRiskScore > 65 ? 'text-red-600' : risk?.orgRiskScore > 40 ? 'text-amber-600' : 'text-green-600',
+      bg: risk?.orgRiskScore > 65 ? 'bg-red-50' : risk?.orgRiskScore > 40 ? 'bg-amber-50' : 'bg-green-50',
+    },
+    {
+      icon: Activity,
+      label: 'Active Workers',
+      value: stats?.activeWorkers ?? '—',
+      sub: 'Check-ins last 30 days',
+      color: 'text-brand-600',
+      bg: 'bg-brand-50',
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -16,12 +62,7 @@ export default function CompanyAdminDashboard() {
       </motion.div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { icon: Users, label: 'Total Workers', value: '185', sub: '12 invited', color: 'text-blue-600', bg: 'bg-blue-50' },
-          { icon: Building2, label: 'Departments', value: '5', sub: '23 locations', color: 'text-purple-600', bg: 'bg-purple-50' },
-          { icon: Shield, label: 'Org Risk Score', value: '34', sub: 'Low risk', color: 'text-green-600', bg: 'bg-green-50' },
-          { icon: Activity, label: 'Avg Check-in Rate', value: '84%', sub: 'Last 30 days', color: 'text-brand-600', bg: 'bg-brand-50' },
-        ].map((stat, i) => (
+        {statCards.map((stat, i) => (
           <motion.div key={stat.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
             <Card>
               <CardContent className="p-5">
@@ -44,7 +85,7 @@ export default function CompanyAdminDashboard() {
           { title: 'Risk Overview', desc: 'View full org risk intelligence and trends', href: '/safety/dashboard', icon: TrendingUp, color: 'bg-green-50 text-green-600' },
           { title: 'Billing & Plans', desc: 'Manage subscription and payment methods', href: '/admin/billing', icon: CreditCard, color: 'bg-amber-50 text-amber-600' },
           { title: 'Audit Log', desc: 'View all access and modification logs', href: '/admin/audit', icon: Shield, color: 'bg-gray-50 text-gray-600' },
-          { title: 'Settings', desc: 'Configure SSO, notifications, and integrations', href: '/admin/settings', icon: Settings, color: 'bg-brand-50 text-brand-600' },
+          { title: 'Settings', desc: 'Configure notifications, risk thresholds, and integrations', href: '/admin/settings', icon: Settings, color: 'bg-brand-50 text-brand-600' },
         ].map((item, i) => (
           <motion.div key={item.title} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
             <Link to={item.href}>

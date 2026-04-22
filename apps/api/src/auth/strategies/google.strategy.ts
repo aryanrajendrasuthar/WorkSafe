@@ -12,10 +12,11 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   ) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     super({
-      clientID: configService.get('GOOGLE_CLIENT_ID'),
-      clientSecret: configService.get('GOOGLE_CLIENT_SECRET'),
-      callbackURL: configService.get('GOOGLE_CALLBACK_URL'),
+      clientID: configService.get('GOOGLE_CLIENT_ID') || 'not-configured',
+      clientSecret: configService.get('GOOGLE_CLIENT_SECRET') || 'not-configured',
+      callbackURL: configService.get('GOOGLE_CALLBACK_URL') || 'http://localhost:3001/auth/google/callback',
       scope: ['email', 'profile'],
+      session: false,
     } as any);
   }
 
@@ -25,16 +26,23 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     profile: { id: string; emails: { value: string }[]; name: { givenName: string; familyName: string }; photos: { value: string }[] },
     done: VerifyCallback,
   ) {
-    const { id, emails, name, photos } = profile;
-    const googleUser = {
-      googleId: id,
-      email: emails[0].value,
-      firstName: name.givenName,
-      lastName: name.familyName,
-      avatarUrl: photos[0]?.value,
-    };
+    try {
+      const { id, emails, name, photos } = profile;
+      if (!emails?.length) {
+        return done(new Error('No email returned from Google'), false as any);
+      }
+      const googleUser = {
+        googleId: id,
+        email: emails[0].value,
+        firstName: name.givenName || 'User',
+        lastName: name.familyName || '',
+        avatarUrl: photos[0]?.value,
+      };
 
-    const user = await this.authService.findOrCreateGoogleUser(googleUser);
-    done(null, user);
+      const user = await this.authService.findOrCreateGoogleUser(googleUser);
+      done(null, user);
+    } catch (err) {
+      done(err as Error, false as any);
+    }
   }
 }

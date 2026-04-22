@@ -1,8 +1,12 @@
 import axios from 'axios';
 import { useAuthStore } from '@/store/auth.store';
 
+// In dev, Vite proxies /api → localhost:3001 (see vite.config.ts)
+// In prod, set VITE_API_URL to your deployed API base URL
+const baseURL = import.meta.env.VITE_API_URL || '/api';
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3001',
+  baseURL,
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true,
 });
@@ -44,11 +48,7 @@ api.interceptors.response.use(
       }
 
       try {
-        const res = await axios.post(
-          `${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/auth/refresh`,
-          { refreshToken },
-        );
-
+        const res = await axios.post(`${baseURL}/auth/refresh`, { refreshToken });
         const { data } = res.data;
         const newToken = data.tokens.accessToken;
         useAuthStore.getState().setTokens(newToken, data.tokens.refreshToken);

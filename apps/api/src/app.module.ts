@@ -14,6 +14,7 @@ import { TherapistModule } from './therapist/therapist.module';
 import { IncidentsModule } from './incidents/incidents.module';
 import { RiskModule } from './risk/risk.module';
 import { HrModule } from './hr/hr.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { HrModule } from './hr/hr.module';
     IncidentsModule,
     RiskModule,
     HrModule,
+    NotificationsModule,
   ],
   providers: [
     { provide: APP_INTERCEPTOR, useClass: AuditLogInterceptor },

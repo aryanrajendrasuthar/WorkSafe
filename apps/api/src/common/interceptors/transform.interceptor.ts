@@ -1,22 +1,32 @@
 import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { mergeMap } from 'rxjs/operators';
+import { of } from 'rxjs';
+import { Response } from 'express';
 
-export interface Response<T> {
+export interface TransformResponse<T> {
   success: boolean;
   data: T;
   message?: string;
 }
 
 @Injectable()
-export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> {
-  intercept(_context: ExecutionContext, next: CallHandler): Observable<Response<T>> {
+export class TransformInterceptor<T> implements NestInterceptor<T, TransformResponse<T> | null> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<TransformResponse<T> | null> {
+    const res = context.switchToHttp().getResponse<Response>();
+
     return next.handle().pipe(
-      map((data) => ({
-        success: true,
-        data: data?.data !== undefined ? data.data : data,
-        message: data?.message,
-      })),
+      mergeMap((data) => {
+        // Route already sent its own response (redirect, raw send) — emit null so
+        // lastValueFrom() doesn't throw EmptyError; NestJS ignores the value for @Res() routes.
+        if (res.headersSent) return of(null);
+
+        return of({
+          success: true,
+          data: data?.data !== undefined ? data.data : data,
+          message: data?.message,
+        } as TransformResponse<T>);
+      }),
     );
   }
 }

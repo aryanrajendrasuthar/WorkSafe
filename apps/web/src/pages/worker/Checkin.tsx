@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, ChevronRight, ChevronLeft, Flame, AlertCircle } from 'lucide-react';
+import { CheckCircle, ChevronRight, ChevronLeft, Flame } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
-import { BodyMap, BodyRegion, BodyAreaSelection, REGION_LABELS } from '@/components/BodyMap';
+import { BodyMap, REGION_LABELS } from '@/components/BodyMap';
+import type { BodyRegion, BodyAreaSelection } from '@/components/BodyMap';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -42,7 +43,7 @@ export default function Checkin() {
 
   const checkinMutation = useMutation({
     mutationFn: (payload: any) => api.post('/checkins', payload),
-    onSuccess: (res) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['worker', 'stats'] });
       queryClient.invalidateQueries({ queryKey: ['checkin'] });
       goTo(3);
@@ -81,7 +82,7 @@ export default function Checkin() {
     checkinMutation.mutate({ overallStatus, bodyAreas, note: note || undefined });
   };
 
-  if (todayCheckin) {
+  if (todayCheckin && step !== 3) {
     return (
       <div className="max-w-md mx-auto py-12 text-center space-y-4">
         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">

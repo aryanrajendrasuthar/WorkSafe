@@ -218,17 +218,18 @@ model User {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  organization      Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  department        Department?   @relation(fields: [departmentId], references: [id])
-  jobProfile        JobProfile?
-  checkIns          DailyCheckin[]
-  workerPrograms    WorkerProgram[]
-  incidents         Incident[]     @relation("WorkerIncidents")
-  reportedIncidents Incident[]     @relation("ReportedIncidents")
-  notifications     Notification[]
-  auditLogs         AuditLog[]
-  refreshTokens     RefreshToken[]
-  assignedPrograms  WorkerProgram[] @relation("AssignedBy")
+  organization        Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  department          Department?         @relation(fields: [departmentId], references: [id])
+  jobProfile          JobProfile?
+  checkIns            DailyCheckin[]
+  workerPrograms      WorkerProgram[]
+  incidents           Incident[]          @relation("WorkerIncidents")
+  reportedIncidents   Incident[]          @relation("ReportedIncidents")
+  notifications       Notification[]
+  auditLogs           AuditLog[]
+  refreshTokens       RefreshToken[]
+  assignedPrograms    WorkerProgram[]     @relation("AssignedBy")
+  passwordResetTokens PasswordResetToken[]
 
   @@map("users")
 }
@@ -258,6 +259,19 @@ model InviteToken {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@map("invite_tokens")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
 }
 
 model JobProfile {

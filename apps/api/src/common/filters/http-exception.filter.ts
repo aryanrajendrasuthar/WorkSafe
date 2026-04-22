@@ -38,6 +38,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
       this.logger.error(`Unhandled error: ${exception.message}`, exception.stack);
     }
 
+    if (response.headersSent) return;
+
     response.status(status).json({
       success: false,
       statusCode: status,

@@ -50,9 +50,9 @@ export default function BillingPage() {
     queryFn: () => api.get('/hr/stats').then((r) => r.data.data),
   });
 
-  const currentTier = stats?.org?.subscriptionTier ?? 'STARTER';
-  const maxWorkers = stats?.org?.maxWorkers ?? 50;
-  const totalUsers = stats?.totalUsers ?? 0;
+  const currentTier = stats?.subscriptionTier ?? 'STARTER';
+  const maxWorkers = stats?.maxWorkers ?? 50;
+  const totalUsers = stats?.totalWorkers ?? 0;
 
   return (
     <div className="space-y-6 max-w-4xl">

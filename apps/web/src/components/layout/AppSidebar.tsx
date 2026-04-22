@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Activity, Dumbbell, AlertTriangle, Users, ClipboardList,
@@ -11,8 +11,7 @@ import { useThemeStore } from '@/store/theme.store';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
 interface NavItem {
@@ -54,7 +53,7 @@ const navByRole: Record<string, NavItem[]> = {
   ],
   COMPANY_ADMIN: [
     { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-    { label: 'Overview', href: '/admin/overview', icon: TrendingUp },
+    { label: 'Risk Overview', href: '/safety/dashboard', icon: TrendingUp },
     { label: 'Users', href: '/admin/users', icon: Users },
     { label: 'Departments', href: '/admin/departments', icon: Building2 },
     { label: 'Billing', href: '/admin/billing', icon: FileBarChart },
@@ -241,8 +240,23 @@ export function AppSidebar({ collapsed, onToggle, isMobileOpen, onMobileClose }:
   );
 }
 
+const NOTIF_HREF: Record<string, string> = {
+  WORKER: '/worker/notifications',
+  THERAPIST: '/therapist/notifications',
+};
+
 export function TopBar({ onMobileMenuOpen, collapsed }: { onMobileMenuOpen: () => void; collapsed: boolean }) {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
+
+  const { data: unreadData } = useQuery({
+    queryKey: ['notifications', 'unread'],
+    queryFn: () => api.get('/notifications/unread').then((r) => r.data.data),
+    refetchInterval: 30_000,
+  });
+
+  const unreadCount: number = unreadData?.count ?? 0;
+  const notifHref = user?.role ? NOTIF_HREF[user.role] : null;
 
   return (
     <header className={cn(
@@ -259,9 +273,17 @@ export function TopBar({ onMobileMenuOpen, collapsed }: { onMobileMenuOpen: () =
       <div className="flex-1" />
 
       <div className="flex items-center gap-3">
-        <button className="relative p-2 rounded-lg hover:bg-gray-100 text-gray-600 transition-colors">
+        <button
+          className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 transition-colors"
+          onClick={() => notifHref && navigate(notifHref)}
+          aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+        >
           <Bell className="w-5 h-5" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+          {unreadCount > 0 && (
+            <span className="absolute top-1 right-1 min-w-[16px] h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-0.5">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          )}
         </button>
         <Avatar className="w-8 h-8 cursor-pointer">
           <AvatarImage src={user?.avatarUrl} />

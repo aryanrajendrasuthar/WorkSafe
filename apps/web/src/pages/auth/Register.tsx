@@ -59,7 +59,7 @@ export default function Register() {
       });
       const { user, tokens } = res.data.data;
       setAuth(user, tokens.accessToken, tokens.refreshToken);
-      navigate('/onboarding');
+      navigate(user.role === 'WORKER' ? '/onboarding' : '/admin/dashboard');
     } catch (err: unknown) {
       const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setError(message || 'Registration failed. Please try again.');
@@ -195,9 +195,9 @@ export default function Register() {
 
             <p className="text-xs text-gray-500">
               By creating an account, you agree to our{' '}
-              <a href="#" className="text-brand-600 hover:underline">Terms of Service</a>
+              <Link to="/terms" className="text-brand-600 hover:underline">Terms of Service</Link>
               {' '}and{' '}
-              <a href="#" className="text-brand-600 hover:underline">Privacy Policy</a>.
+              <Link to="/privacy" className="text-brand-600 hover:underline">Privacy Policy</Link>.
             </p>
 
             <Button type="submit" variant="brand" size="lg" className="w-full" loading={isSubmitting}>

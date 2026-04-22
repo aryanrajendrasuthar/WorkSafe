@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import {
   ShieldCheck, TrendingDown, Activity, Users, BarChart3,
-  CheckCircle2, ArrowRight, ChevronRight, Star, Zap, Globe, Lock
+  CheckCircle2, ArrowRight, ChevronRight, Star, Zap, Globe, Lock, Mail
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,17 +24,17 @@ export default function Landing() {
       <nav className="sticky top-0 z-50 glass border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <div className="w-8 h-8 gradient-brand rounded-lg flex items-center justify-center">
                 <ShieldCheck className="w-5 h-5 text-white" />
               </div>
               <span className="text-xl font-bold text-gray-900">WorkSafe</span>
-            </div>
+            </Link>
             <div className="hidden md:flex items-center gap-8">
               <a href="#features" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">Features</a>
               <a href="#how-it-works" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">How it works</a>
               <a href="#pricing" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">Pricing</a>
-              <a href="#" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">Enterprise</a>
+              <a href="#pricing" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">Enterprise</a>
             </div>
             <div className="flex items-center gap-3">
               <Link to="/login">
@@ -72,7 +72,9 @@ export default function Landing() {
               className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-gray-900 tracking-tight leading-tight mb-6"
             >
               Stop injuries{' '}
-              <span className="text-transparent bg-clip-text gradient-brand">before</span>
+              <span className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-[#0e95e7] to-[#0358a0]">
+                before
+              </span>
               {' '}they happen
             </motion.h1>
 
@@ -92,10 +94,16 @@ export default function Landing() {
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>
-              <Button variant="outline" size="xl" className="w-full sm:w-auto">
-                Watch demo
-                <ChevronRight className="w-5 h-5" />
-              </Button>
+              <a
+                href="https://www.youtube.com"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button variant="outline" size="xl" className="w-full sm:w-auto">
+                  Watch demo
+                  <ChevronRight className="w-5 h-5" />
+                </Button>
+              </a>
             </motion.div>
 
             <motion.p variants={fadeUp} className="mt-6 text-sm text-gray-500">
@@ -266,14 +274,22 @@ export default function Landing() {
                     </li>
                   ))}
                 </ul>
-                <Link to="/register">
-                  <Button
-                    variant={plan.popular ? 'brand' : 'outline'}
-                    className="w-full"
-                  >
-                    {plan.cta}
-                  </Button>
-                </Link>
+                {plan.isEnterprise ? (
+                  <a href="mailto:aryanrajendrasuthar@gmail.com">
+                    <Button variant="outline" className="w-full">
+                      {plan.cta}
+                    </Button>
+                  </a>
+                ) : (
+                  <Link to="/register">
+                    <Button
+                      variant={plan.popular ? 'brand' : 'outline'}
+                      className="w-full"
+                    >
+                      {plan.cta}
+                    </Button>
+                  </Link>
+                )}
               </motion.div>
             ))}
           </div>
@@ -319,9 +335,12 @@ export default function Landing() {
                   <ArrowRight className="w-5 h-5" />
                 </Button>
               </Link>
-              <Button variant="outline" size="xl">
-                Talk to sales
-              </Button>
+              <a href="mailto:aryanrajendrasuthar@gmail.com">
+                <Button variant="outline" size="xl">
+                  <Mail className="w-4 h-4" />
+                  Talk to sales
+                </Button>
+              </a>
             </div>
             <div className="flex items-center justify-center gap-6 mt-8">
               {['4.9/5 rating', '500+ companies', 'HIPAA compliant'].map((item) => (
@@ -339,18 +358,18 @@ export default function Landing() {
       <footer className="bg-gray-900 text-gray-400 py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <div className="w-7 h-7 gradient-brand rounded-lg flex items-center justify-center">
                 <ShieldCheck className="w-4 h-4 text-white" />
               </div>
               <span className="font-bold text-white">WorkSafe</span>
               <span className="text-sm">© 2026</span>
-            </div>
+            </Link>
             <div className="flex gap-6 text-sm">
-              <a href="#" className="hover:text-white transition-colors">Privacy</a>
-              <a href="#" className="hover:text-white transition-colors">Terms</a>
-              <a href="#" className="hover:text-white transition-colors">Security</a>
-              <a href="#" className="hover:text-white transition-colors">HIPAA</a>
+              <Link to="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+              <Link to="/terms" className="hover:text-white transition-colors">Terms</Link>
+              <a href="#features" className="hover:text-white transition-colors">Security</a>
+              <a href="#features" className="hover:text-white transition-colors">HIPAA</a>
             </div>
           </div>
         </div>
@@ -467,6 +486,7 @@ const pricingPlans = [
     price: '$299',
     period: '/mo',
     popular: false,
+    isEnterprise: false,
     cta: 'Start free trial',
     features: ['Up to 50 workers', 'Basic check-in & programs', 'Safety manager dashboard', 'Email support', 'OSHA report generation'],
   },
@@ -476,6 +496,7 @@ const pricingPlans = [
     price: '$999',
     period: '/mo',
     popular: true,
+    isEnterprise: false,
     cta: 'Start free trial',
     features: ['Up to 500 workers', 'Full risk intelligence engine', 'Multi-department support', 'HR integrations', 'Audit logging & MFA', 'Priority support'],
   },
@@ -485,6 +506,7 @@ const pricingPlans = [
     price: 'Custom',
     period: '',
     popular: false,
+    isEnterprise: true,
     cta: 'Contact sales',
     features: ['Unlimited workers', 'Predictive ML risk scoring', 'SAML SSO', 'SLA & dedicated CSM', 'SOC 2 Type II', 'Custom integrations'],
   },

@@ -42,7 +42,7 @@ const REGION_LABELS: Record<BodyRegion, string> = {
 };
 
 function intensityColor(intensity: number, selected: boolean): string {
-  if (!selected || intensity === 0) return 'fill-gray-100 hover:fill-gray-200';
+  if (!selected || intensity === 0) return 'fill-slate-200 hover:fill-brand-100';
   if (intensity <= 2) return 'fill-green-200 hover:fill-green-300';
   if (intensity <= 4) return 'fill-yellow-200 hover:fill-yellow-300';
   if (intensity <= 6) return 'fill-orange-300 hover:fill-orange-400';
@@ -51,7 +51,7 @@ function intensityColor(intensity: number, selected: boolean): string {
 }
 
 function intensityStroke(intensity: number, selected: boolean): string {
-  if (!selected || intensity === 0) return 'stroke-gray-300';
+  if (!selected || intensity === 0) return 'stroke-slate-400';
   if (intensity <= 2) return 'stroke-green-400';
   if (intensity <= 4) return 'stroke-yellow-400';
   if (intensity <= 6) return 'stroke-orange-500';
@@ -112,13 +112,13 @@ function FrontBody({ selections, onToggle, readonly }: Omit<BodyMapProps, 'size'
       {/* Right Knee */}
       {region('RIGHT_KNEE', <rect x="61" y="158" width="16" height="22" rx="4" />)}
       {/* Left Thigh */}
-      <rect x="44" y="137" width="14" height="20" rx="3" className="fill-gray-50 stroke-gray-200 stroke-[1]" />
+      <rect x="44" y="137" width="14" height="20" rx="3" className="fill-slate-100 stroke-slate-300 stroke-[1]" />
       {/* Right Thigh */}
-      <rect x="62" y="137" width="14" height="20" rx="3" className="fill-gray-50 stroke-gray-200 stroke-[1]" />
+      <rect x="62" y="137" width="14" height="20" rx="3" className="fill-slate-100 stroke-slate-300 stroke-[1]" />
       {/* Left Shin */}
-      <rect x="44" y="182" width="14" height="28" rx="3" className="fill-gray-50 stroke-gray-200 stroke-[1]" />
+      <rect x="44" y="182" width="14" height="28" rx="3" className="fill-slate-100 stroke-slate-300 stroke-[1]" />
       {/* Right Shin */}
-      <rect x="62" y="182" width="14" height="28" rx="3" className="fill-gray-50 stroke-gray-200 stroke-[1]" />
+      <rect x="62" y="182" width="14" height="28" rx="3" className="fill-slate-100 stroke-slate-300 stroke-[1]" />
       {/* Left Ankle/Foot */}
       {region('LEFT_ANKLE_FOOT', <rect x="41" y="212" width="18" height="14" rx="4" />)}
       {/* Right Ankle/Foot */}
@@ -181,11 +181,11 @@ function BackBody({ selections, onToggle, readonly }: Omit<BodyMapProps, 'size'>
       {/* Right Knee back */}
       {region('RIGHT_KNEE', <rect x="61" y="158" width="16" height="22" rx="4" />)}
       {/* Thighs back */}
-      <rect x="44" y="137" width="14" height="20" rx="3" className="fill-gray-50 stroke-gray-200 stroke-[1]" />
-      <rect x="62" y="137" width="14" height="20" rx="3" className="fill-gray-50 stroke-gray-200 stroke-[1]" />
+      <rect x="44" y="137" width="14" height="20" rx="3" className="fill-slate-100 stroke-slate-300 stroke-[1]" />
+      <rect x="62" y="137" width="14" height="20" rx="3" className="fill-slate-100 stroke-slate-300 stroke-[1]" />
       {/* Calves */}
-      <rect x="44" y="182" width="14" height="28" rx="3" className="fill-gray-50 stroke-gray-200 stroke-[1]" />
-      <rect x="62" y="182" width="14" height="28" rx="3" className="fill-gray-50 stroke-gray-200 stroke-[1]" />
+      <rect x="44" y="182" width="14" height="28" rx="3" className="fill-slate-100 stroke-slate-300 stroke-[1]" />
+      <rect x="62" y="182" width="14" height="28" rx="3" className="fill-slate-100 stroke-slate-300 stroke-[1]" />
       {/* Left Ankle/Foot back */}
       {region('LEFT_ANKLE_FOOT', <rect x="41" y="212" width="18" height="14" rx="4" />)}
       {/* Right Ankle/Foot back */}
@@ -196,7 +196,6 @@ function BackBody({ selections, onToggle, readonly }: Omit<BodyMapProps, 'size'>
 
 export function BodyMap({ selections, onToggle, readonly = false, size = 'md' }: BodyMapProps) {
   const [view, setView] = useState<'front' | 'back'>('front');
-  const [tooltip, setTooltip] = useState<string | null>(null);
 
   const containerH = size === 'sm' ? 'h-48' : size === 'lg' ? 'h-80' : 'h-64';
 
