@@ -26,18 +26,25 @@ import WorkerDetail from './pages/therapist/WorkerDetail';
 import TherapistPrograms from './pages/therapist/Programs';
 import ProgramBuilder from './pages/therapist/ProgramBuilder';
 import TherapistIncidents from './pages/therapist/Incidents';
+import IncidentDetail from './pages/therapist/IncidentDetail';
 
 // Safety Manager pages
 import SafetyDashboard from './pages/safety-manager/Dashboard';
 import SafetyDepartments from './pages/safety-manager/Departments';
 import DepartmentDetail from './pages/safety-manager/DepartmentDetail';
 import SafetyAlerts from './pages/safety-manager/Alerts';
+import OshaReports from './pages/safety-manager/OshaReports';
 
 // HR Admin pages
 import HRDashboard from './pages/hr-admin/Dashboard';
+import HREmployees from './pages/hr-admin/Employees';
+import HRDepartments from './pages/hr-admin/DepartmentsPage';
+import HRInvites from './pages/hr-admin/Invites';
 
 // Company Admin pages
 import CompanyAdminDashboard from './pages/company-admin/Dashboard';
+import AuditLogPage from './pages/company-admin/AuditLog';
+import BillingPage from './pages/company-admin/Billing';
 
 function RootRedirect() {
   const { isAuthenticated, user } = useAuthStore();
@@ -108,6 +115,7 @@ export default function App() {
             <Route path="programs" element={<TherapistPrograms />} />
             <Route path="programs/new" element={<ProgramBuilder />} />
             <Route path="incidents" element={<TherapistIncidents />} />
+            <Route path="incidents/:id" element={<IncidentDetail />} />
             <Route path="escalations" element={<div className="p-8 text-center text-gray-500">Escalations — Coming in Sprint 4</div>} />
             <Route path="notifications" element={<div className="p-8 text-center text-gray-500">Notifications — Coming in Sprint 3</div>} />
           </Route>
@@ -126,7 +134,7 @@ export default function App() {
             <Route path="departments/:id" element={<DepartmentDetail />} />
             <Route path="alerts" element={<SafetyAlerts />} />
             <Route path="incidents" element={<div className="p-8 text-center text-gray-500">Incidents — Coming in Sprint 5</div>} />
-            <Route path="reports" element={<div className="p-8 text-center text-gray-500">OSHA Reports — Coming in Sprint 5</div>} />
+            <Route path="reports" element={<OshaReports />} />
           </Route>
 
           {/* HR Admin routes */}
@@ -139,9 +147,9 @@ export default function App() {
             }
           >
             <Route path="dashboard" element={<HRDashboard />} />
-            <Route path="employees" element={<div className="p-8 text-center text-gray-500">Employees — Coming in Sprint 5</div>} />
-            <Route path="departments" element={<div className="p-8 text-center text-gray-500">Departments — Coming in Sprint 5</div>} />
-            <Route path="invites" element={<div className="p-8 text-center text-gray-500">Invites — Coming in Sprint 5</div>} />
+            <Route path="employees" element={<HREmployees />} />
+            <Route path="departments" element={<HRDepartments />} />
+            <Route path="invites" element={<HRInvites />} />
           </Route>
 
           {/* Company Admin routes */}
@@ -154,11 +162,11 @@ export default function App() {
             }
           >
             <Route path="dashboard" element={<CompanyAdminDashboard />} />
-            <Route path="users" element={<div className="p-8 text-center text-gray-500">Users — Coming in Sprint 5</div>} />
-            <Route path="departments" element={<div className="p-8 text-center text-gray-500">Departments — Coming in Sprint 5</div>} />
-            <Route path="billing" element={<div className="p-8 text-center text-gray-500">Billing — Coming in Sprint 5</div>} />
-            <Route path="settings" element={<div className="p-8 text-center text-gray-500">Settings — Coming in Sprint 5</div>} />
-            <Route path="audit" element={<div className="p-8 text-center text-gray-500">Audit Log — Coming in Sprint 5</div>} />
+            <Route path="users" element={<HREmployees />} />
+            <Route path="departments" element={<HRDepartments />} />
+            <Route path="billing" element={<BillingPage />} />
+            <Route path="settings" element={<div className="p-8 text-center text-gray-500">Settings — Coming in Sprint 6</div>} />
+            <Route path="audit" element={<AuditLogPage />} />
             <Route path="overview" element={<SafetyDashboard />} />
           </Route>
 

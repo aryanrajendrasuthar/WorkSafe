@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, AlertTriangle, ChevronDown, FileText } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Plus, AlertTriangle, ChevronDown, FileText, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
@@ -217,6 +218,9 @@ export default function TherapistIncidents() {
                           {inc.worker.firstName} {inc.worker.lastName}
                         </p>
                         <Badge variant={SEVERITY_VARIANT[inc.severity] as any} className="text-[10px]">{inc.severity}</Badge>
+                      <Link to={`/therapist/incidents/${inc.id}`} onClick={(e) => e.stopPropagation()} className="text-brand-500 hover:text-brand-600">
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </Link>
                         {inc.isOshaRecordable && (
                           <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-medium">OSHA</span>
                         )}

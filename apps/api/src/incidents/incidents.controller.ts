@@ -21,6 +21,12 @@ export class IncidentsController {
     return this.incidentsService.create(user.id, user.organizationId, dto);
   }
 
+  @Get('osha')
+  @ApiOperation({ summary: 'Get OSHA recordable incidents report' })
+  oshaReport(@CurrentUser() user: any, @Query('year') year?: string) {
+    return this.incidentsService.getOshaReport(user.organizationId, year ? parseInt(year) : undefined);
+  }
+
   @Get()
   @ApiOperation({ summary: 'List incidents for organization' })
   findAll(@CurrentUser() user: any, @Query('workerId') workerId?: string) {
@@ -41,5 +47,25 @@ export class IncidentsController {
     @Body('status') status: string,
   ) {
     return this.incidentsService.updateStatus(id, user.organizationId, status);
+  }
+
+  @Post(':id/milestones')
+  @ApiOperation({ summary: 'Add RTW milestone to incident' })
+  addMilestone(
+    @CurrentUser() user: any,
+    @Param('id') id: string,
+    @Body() dto: { milestoneType: string; targetDate?: string; notes?: string },
+  ) {
+    return this.incidentsService.addMilestone(id, user.organizationId, dto);
+  }
+
+  @Patch('milestones/:milestoneId/clear')
+  @ApiOperation({ summary: 'Clear (sign off) an RTW milestone' })
+  clearMilestone(
+    @CurrentUser() user: any,
+    @Param('milestoneId') milestoneId: string,
+    @Body('notes') notes?: string,
+  ) {
+    return this.incidentsService.clearMilestone(milestoneId, user.id, notes);
   }
 }

@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { AuditLogInterceptor } from './common/interceptors/audit-log.interceptor';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
@@ -11,6 +13,7 @@ import { ProgramsModule } from './programs/programs.module';
 import { TherapistModule } from './therapist/therapist.module';
 import { IncidentsModule } from './incidents/incidents.module';
 import { RiskModule } from './risk/risk.module';
+import { HrModule } from './hr/hr.module';
 
 @Module({
   imports: [
@@ -26,6 +29,10 @@ import { RiskModule } from './risk/risk.module';
     TherapistModule,
     IncidentsModule,
     RiskModule,
+    HrModule,
+  ],
+  providers: [
+    { provide: APP_INTERCEPTOR, useClass: AuditLogInterceptor },
   ],
 })
 export class AppModule {}

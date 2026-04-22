@@ -60,4 +60,65 @@ export class IncidentsService {
       data: { status: status as any },
     });
   }
+
+  async addMilestone(incidentId: string, organizationId: string, dto: { milestoneType: string; targetDate?: string; notes?: string }) {
+    const incident = await this.prisma.incident.findFirst({ where: { id: incidentId, organizationId } });
+    if (!incident) throw new NotFoundException('Incident not found');
+
+    return this.prisma.rTWMilestone.create({
+      data: {
+        incidentId,
+        milestoneType: dto.milestoneType as any,
+        targetDate: dto.targetDate ? new Date(dto.targetDate) : undefined,
+        notes: dto.notes,
+        status: 'IN_PROGRESS',
+      },
+    });
+  }
+
+  async clearMilestone(milestoneId: string, clearedById: string, notes?: string) {
+    return this.prisma.rTWMilestone.update({
+      where: { id: milestoneId },
+      data: {
+        status: 'CLEARED',
+        clearedAt: new Date(),
+        clearedById,
+        notes: notes ?? undefined,
+      },
+    });
+  }
+
+  async getOshaReport(organizationId: string, year?: number) {
+    const y = year ?? new Date().getFullYear();
+    const start = new Date(`${y}-01-01`);
+    const end = new Date(`${y + 1}-01-01`);
+
+    const incidents = await this.prisma.incident.findMany({
+      where: { organizationId, isOshaRecordable: true, incidentDate: { gte: start, lt: end } },
+      include: {
+        worker: { select: { firstName: true, lastName: true, department: { select: { name: true } }, jobProfile: { select: { title: true } } } },
+        reportedBy: { select: { firstName: true, lastName: true } },
+        rtwMilestones: true,
+      },
+      orderBy: { incidentDate: 'asc' },
+    });
+
+    const bySeverity = incidents.reduce((acc: Record<string, number>, i) => {
+      acc[i.severity] = (acc[i.severity] ?? 0) + 1;
+      return acc;
+    }, {});
+
+    const byBodyPart = incidents.reduce((acc: Record<string, number>, i) => {
+      acc[i.bodyPart] = (acc[i.bodyPart] ?? 0) + 1;
+      return acc;
+    }, {});
+
+    return {
+      year: y,
+      totalRecordable: incidents.length,
+      bySeverity,
+      byBodyPart,
+      incidents,
+    };
+  }
 }
