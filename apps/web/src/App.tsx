@@ -29,6 +29,9 @@ import TherapistIncidents from './pages/therapist/Incidents';
 
 // Safety Manager pages
 import SafetyDashboard from './pages/safety-manager/Dashboard';
+import SafetyDepartments from './pages/safety-manager/Departments';
+import DepartmentDetail from './pages/safety-manager/DepartmentDetail';
+import SafetyAlerts from './pages/safety-manager/Alerts';
 
 // HR Admin pages
 import HRDashboard from './pages/hr-admin/Dashboard';
@@ -119,11 +122,11 @@ export default function App() {
             }
           >
             <Route path="dashboard" element={<SafetyDashboard />} />
-            <Route path="risk" element={<div className="p-8 text-center text-gray-500">Risk Intelligence — Coming in Sprint 4</div>} />
-            <Route path="departments" element={<div className="p-8 text-center text-gray-500">Departments — Coming in Sprint 4</div>} />
+            <Route path="departments" element={<SafetyDepartments />} />
+            <Route path="departments/:id" element={<DepartmentDetail />} />
+            <Route path="alerts" element={<SafetyAlerts />} />
             <Route path="incidents" element={<div className="p-8 text-center text-gray-500">Incidents — Coming in Sprint 5</div>} />
             <Route path="reports" element={<div className="p-8 text-center text-gray-500">OSHA Reports — Coming in Sprint 5</div>} />
-            <Route path="alerts" element={<div className="p-8 text-center text-gray-500">Alerts — Coming in Sprint 4</div>} />
           </Route>
 
           {/* HR Admin routes */}
