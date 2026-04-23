@@ -29,6 +29,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Generate Prisma Client
+        run: pnpm --filter api run db:generate
+
       - name: Typecheck (web)
         run: pnpm --filter web run typecheck
 
@@ -66,6 +69,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm --filter api run db:generate
 
       - name: Build shared
         run: pnpm --filter shared run build
