@@ -22,7 +22,9 @@ export class WorkersController {
   }
 
   @Get('stats')
-  @ApiOperation({ summary: 'Get worker stats: streaks, check-in count, active programs' })
+  @ApiOperation({
+    summary: 'Get worker stats: streaks, check-in count, active programs',
+  })
   async getStats(@CurrentUser() user: { id: string }) {
     return this.workersService.getWorkerStats(user.id);
   }

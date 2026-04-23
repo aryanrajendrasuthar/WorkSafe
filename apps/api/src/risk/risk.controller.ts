@@ -45,7 +45,9 @@ export class RiskController {
   }
 
   @Get('check-alerts')
-  @ApiOperation({ summary: 'Trigger alert check (can be called by cron or manually)' })
+  @ApiOperation({
+    summary: 'Trigger alert check (can be called by cron or manually)',
+  })
   checkAlerts(@CurrentUser() user: any) {
     return this.riskService.checkAndCreateAlerts(user.organizationId);
   }

@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -24,7 +33,10 @@ export class IncidentsController {
   @Get('osha')
   @ApiOperation({ summary: 'Get OSHA recordable incidents report' })
   oshaReport(@CurrentUser() user: any, @Query('year') year?: string) {
-    return this.incidentsService.getOshaReport(user.organizationId, year ? parseInt(year) : undefined);
+    return this.incidentsService.getOshaReport(
+      user.organizationId,
+      year ? parseInt(year) : undefined,
+    );
   }
 
   @Get()

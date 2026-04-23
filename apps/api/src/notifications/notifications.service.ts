@@ -22,7 +22,9 @@ export class NotificationsService {
   }
 
   async getUnreadCount(userId: string) {
-    const count = await this.prisma.notification.count({ where: { userId, isRead: false } });
+    const count = await this.prisma.notification.count({
+      where: { userId, isRead: false },
+    });
     return { count };
   }
 
@@ -58,15 +60,30 @@ export class NotificationsService {
     });
   }
 
-  async createForOrg(orgId: string, type: NotificationType, title: string, message: string, roles?: string[]) {
+  async createForOrg(
+    orgId: string,
+    type: NotificationType,
+    title: string,
+    message: string,
+    roles?: string[],
+  ) {
     const where: any = { organizationId: orgId, isActive: true };
     if (roles?.length) where.role = { in: roles };
 
-    const users = await this.prisma.user.findMany({ where, select: { id: true } });
+    const users = await this.prisma.user.findMany({
+      where,
+      select: { id: true },
+    });
     if (!users.length) return;
 
     await this.prisma.notification.createMany({
-      data: users.map((u) => ({ userId: u.id, type, title, message, data: {} })),
+      data: users.map((u) => ({
+        userId: u.id,
+        type,
+        title,
+        message,
+        data: {},
+      })),
     });
   }
 

@@ -12,7 +12,11 @@ import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { addDays } from 'date-fns';
 import { Role, User } from '@prisma/client';
-import { RegisterDto, InviteRegisterDto, CreateInviteDto } from './dto/register.dto';
+import {
+  RegisterDto,
+  InviteRegisterDto,
+  CreateInviteDto,
+} from './dto/register.dto';
 import { JwtPayload } from './strategies/jwt.strategy';
 
 type SafeUser = Omit<User, 'passwordHash' | 'mfaSecret'>;
@@ -25,7 +29,10 @@ export class AuthService {
     private config: ConfigService,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<SafeUser | null> {
+  async validateUser(
+    email: string,
+    password: string,
+  ): Promise<SafeUser | null> {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user || !user.passwordHash) return null;
 
@@ -37,14 +44,21 @@ export class AuthService {
   }
 
   async register(dto: RegisterDto) {
-    const existing = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    const existing = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
     if (existing) throw new ConflictException('Email already registered');
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
 
     // All self-registrations join the primary org as a WORKER
-    const org = await this.prisma.organization.findFirst({ orderBy: { createdAt: 'asc' } });
-    if (!org) throw new BadRequestException('No organization found. Contact your administrator.');
+    const org = await this.prisma.organization.findFirst({
+      orderBy: { createdAt: 'asc' },
+    });
+    if (!org)
+      throw new BadRequestException(
+        'No organization found. Contact your administrator.',
+      );
 
     const user = await this.prisma.user.create({
       data: {
@@ -107,17 +121,23 @@ export class AuthService {
     if (byGoogleId) return byGoogleId;
 
     // Existing user matched by email — link their Google account
-    const byEmail = await this.prisma.user.findUnique({ where: { email: googleUser.email } });
+    const byEmail = await this.prisma.user.findUnique({
+      where: { email: googleUser.email },
+    });
     if (byEmail) {
       return this.prisma.user.update({
         where: { id: byEmail.id },
-        data: { googleId: googleUser.googleId, avatarUrl: googleUser.avatarUrl },
+        data: {
+          googleId: googleUser.googleId,
+          avatarUrl: googleUser.avatarUrl,
+        },
       });
     }
 
     // New user — determine role based on admin email env var
     const adminEmail = this.config.get<string>('ADMIN_GOOGLE_EMAIL', '');
-    const isAdmin = adminEmail && googleUser.email.toLowerCase() === adminEmail.toLowerCase();
+    const isAdmin =
+      adminEmail && googleUser.email.toLowerCase() === adminEmail.toLowerCase();
 
     if (isAdmin) {
       // Admin gets their own organization
@@ -125,7 +145,12 @@ export class AuthService {
         data: { name: `${googleUser.firstName}'s Organization` },
       });
       return this.prisma.user.create({
-        data: { ...googleUser, role: Role.COMPANY_ADMIN, organizationId: org.id, isOnboarded: true },
+        data: {
+          ...googleUser,
+          role: Role.COMPANY_ADMIN,
+          organizationId: org.id,
+          isOnboarded: true,
+        },
       });
     }
 
@@ -141,7 +166,9 @@ export class AuthService {
     }
 
     if (!orgId) {
-      const firstOrg = await this.prisma.organization.findFirst({ orderBy: { createdAt: 'asc' } });
+      const firstOrg = await this.prisma.organization.findFirst({
+        orderBy: { createdAt: 'asc' },
+      });
       if (firstOrg) orgId = firstOrg.id;
     }
 
@@ -152,18 +179,27 @@ export class AuthService {
     }
 
     return this.prisma.user.create({
-      data: { ...googleUser, role: Role.WORKER, organizationId: orgId, isOnboarded: true },
+      data: {
+        ...googleUser,
+        role: Role.WORKER,
+        organizationId: orgId,
+        isOnboarded: true,
+      },
     });
   }
 
   async registerWithInvite(dto: InviteRegisterDto) {
-    const invite = await this.prisma.inviteToken.findUnique({ where: { token: dto.token } });
+    const invite = await this.prisma.inviteToken.findUnique({
+      where: { token: dto.token },
+    });
 
     if (!invite || invite.expiresAt < new Date() || invite.usedAt) {
       throw new BadRequestException('Invalid or expired invite token');
     }
 
-    const existing = await this.prisma.user.findUnique({ where: { email: invite.email } });
+    const existing = await this.prisma.user.findUnique({
+      where: { email: invite.email },
+    });
     if (existing) throw new ConflictException('Email already registered');
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
@@ -222,10 +258,13 @@ export class AuthService {
   async forgotPassword(email: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });
     // Always return success to prevent email enumeration
-    if (!user || !user.passwordHash) return { message: 'If that email exists, a reset link has been sent.' };
+    if (!user || !user.passwordHash)
+      return { message: 'If that email exists, a reset link has been sent.' };
 
     // Invalidate existing tokens
-    await this.prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
+    await this.prisma.passwordResetToken.deleteMany({
+      where: { userId: user.id },
+    });
 
     const token = randomBytes(32).toString('hex');
     await this.prisma.passwordResetToken.create({
@@ -242,11 +281,16 @@ export class AuthService {
     // Log the reset URL (in production this would be sent via email)
     console.log(`[PASSWORD RESET] ${user.email} → ${resetUrl}`);
 
-    return { message: 'If that email exists, a reset link has been sent.', resetUrl };
+    return {
+      message: 'If that email exists, a reset link has been sent.',
+      resetUrl,
+    };
   }
 
   async resetPassword(token: string, newPassword: string) {
-    const record = await this.prisma.passwordResetToken.findUnique({ where: { token } });
+    const record = await this.prisma.passwordResetToken.findUnique({
+      where: { token },
+    });
 
     if (!record || record.expiresAt < new Date() || record.usedAt) {
       throw new BadRequestException('Invalid or expired reset token');
@@ -264,20 +308,34 @@ export class AuthService {
     });
 
     // Invalidate all refresh tokens on password change
-    await this.prisma.refreshToken.deleteMany({ where: { userId: record.userId } });
+    await this.prisma.refreshToken.deleteMany({
+      where: { userId: record.userId },
+    });
 
-    return { message: 'Password reset successfully. Please log in with your new password.' };
+    return {
+      message:
+        'Password reset successfully. Please log in with your new password.',
+    };
   }
 
-  async changePassword(userId: string, currentPassword: string, newPassword: string) {
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    if (!user || !user.passwordHash) throw new BadRequestException('No password set on this account');
+    if (!user || !user.passwordHash)
+      throw new BadRequestException('No password set on this account');
 
     const valid = await bcrypt.compare(currentPassword, user.passwordHash);
-    if (!valid) throw new UnauthorizedException('Current password is incorrect');
+    if (!valid)
+      throw new UnauthorizedException('Current password is incorrect');
 
     const passwordHash = await bcrypt.hash(newPassword, 12);
-    await this.prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+    });
     await this.prisma.refreshToken.deleteMany({ where: { userId } });
 
     return { message: 'Password changed successfully. Please log in again.' };

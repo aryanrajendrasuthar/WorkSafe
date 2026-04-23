@@ -26,9 +26,18 @@ export class ProgramsService {
 
     return workerPrograms.map((wp) => {
       const totalSessions = wp.sessionLogs.length;
-      const completedExercises = wp.sessionLogs.reduce((s, l) => s + l.exercisesCompleted, 0);
-      const totalExercises = wp.sessionLogs.reduce((s, l) => s + l.exercisesTotal, 0);
-      const completionRate = totalExercises > 0 ? Math.round((completedExercises / totalExercises) * 100) : 0;
+      const completedExercises = wp.sessionLogs.reduce(
+        (s, l) => s + l.exercisesCompleted,
+        0,
+      );
+      const totalExercises = wp.sessionLogs.reduce(
+        (s, l) => s + l.exercisesTotal,
+        0,
+      );
+      const completionRate =
+        totalExercises > 0
+          ? Math.round((completedExercises / totalExercises) * 100)
+          : 0;
 
       return { ...wp, totalSessions, completionRate };
     });
@@ -48,7 +57,11 @@ export class ProgramsService {
     return program;
   }
 
-  async logSession(workerProgramId: string, userId: string, dto: CreateSessionDto) {
+  async logSession(
+    workerProgramId: string,
+    userId: string,
+    dto: CreateSessionDto,
+  ) {
     const workerProgram = await this.prisma.workerProgram.findFirst({
       where: { id: workerProgramId, userId },
     });
@@ -77,7 +90,11 @@ export class ProgramsService {
     });
   }
 
-  async createProgram(organizationId: string, createdById: string, dto: CreateProgramDto) {
+  async createProgram(
+    organizationId: string,
+    createdById: string,
+    dto: CreateProgramDto,
+  ) {
     return this.prisma.program.create({
       data: {
         organizationId,
@@ -101,7 +118,10 @@ export class ProgramsService {
         },
       },
       include: {
-        programExercises: { include: { exercise: true }, orderBy: { order: 'asc' } },
+        programExercises: {
+          include: { exercise: true },
+          orderBy: { order: 'asc' },
+        },
       },
     });
   }
@@ -110,17 +130,29 @@ export class ProgramsService {
     return this.prisma.program.findMany({
       where: { organizationId, isActive: true },
       include: {
-        programExercises: { include: { exercise: true }, orderBy: { order: 'asc' } },
+        programExercises: {
+          include: { exercise: true },
+          orderBy: { order: 'asc' },
+        },
         _count: { select: { workerPrograms: true } },
       },
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async assignProgram(programId: string, assignedById: string, organizationId: string, dto: AssignProgramDto) {
+  async assignProgram(
+    programId: string,
+    assignedById: string,
+    organizationId: string,
+    dto: AssignProgramDto,
+  ) {
     const [program, worker] = await Promise.all([
-      this.prisma.program.findFirst({ where: { id: programId, organizationId } }),
-      this.prisma.user.findFirst({ where: { id: dto.workerId, organizationId, role: 'WORKER' } }),
+      this.prisma.program.findFirst({
+        where: { id: programId, organizationId },
+      }),
+      this.prisma.user.findFirst({
+        where: { id: dto.workerId, organizationId, role: 'WORKER' },
+      }),
     ]);
     if (!program) throw new NotFoundException('Program not found');
     if (!worker) throw new NotFoundException('Worker not found');

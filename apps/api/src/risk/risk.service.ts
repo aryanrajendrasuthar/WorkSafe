@@ -57,24 +57,37 @@ export class RiskService {
     });
 
     const orgRiskScore = workerScores.length
-      ? Math.round(workerScores.reduce((s, w) => s + w.riskScore, 0) / workerScores.length)
+      ? Math.round(
+          workerScores.reduce((s, w) => s + w.riskScore, 0) /
+            workerScores.length,
+        )
       : 0;
 
     const riskDist = { low: 0, medium: 0, high: 0, critical: 0 };
     for (const w of workerScores) riskDist[w.riskLevel]++;
 
     // Check-in compliance (last 7 days)
-    const checkinTotal = workers.reduce((s, w) => s + w.checkIns.filter((c) => new Date(c.date) >= since7).length, 0);
+    const checkinTotal = workers.reduce(
+      (s, w) => s + w.checkIns.filter((c) => new Date(c.date) >= since7).length,
+      0,
+    );
     const maxExpected = workers.length * 7;
-    const checkinRate = maxExpected > 0 ? Math.round((checkinTotal / maxExpected) * 100) : 0;
+    const checkinRate =
+      maxExpected > 0 ? Math.round((checkinTotal / maxExpected) * 100) : 0;
 
     // Department risk scores
     const deptScores = departments.map((d) => {
       const deptWorkers = d.users;
-      if (deptWorkers.length < 1) return { id: d.id, name: d.name, score: 0, workerCount: 0 };
+      if (deptWorkers.length < 1)
+        return { id: d.id, name: d.name, score: 0, workerCount: 0 };
       const scores = deptWorkers.map((w) => this.computeWorkerRisk(w.checkIns));
       const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
-      return { id: d.id, name: d.name, score: avg, workerCount: deptWorkers.length };
+      return {
+        id: d.id,
+        name: d.name,
+        score: avg,
+        workerCount: deptWorkers.length,
+      };
     });
 
     // Top body regions (last 30 days)
@@ -100,7 +113,11 @@ export class RiskService {
       entityId: organizationId,
       organizationId,
       score: orgRiskScore,
-      factors: { checkinRate, workerCount: workers.length, deptCount: departments.length },
+      factors: {
+        checkinRate,
+        workerCount: workers.length,
+        deptCount: departments.length,
+      },
     });
 
     return {
@@ -109,7 +126,9 @@ export class RiskService {
       riskDistribution: riskDist,
       checkinRate,
       totalWorkers: workers.length,
-      activeIncidentsThisMonth: incidents.filter((i) => i.status !== 'CLOSED' && i.status !== 'RESOLVED').length,
+      activeIncidentsThisMonth: incidents.filter(
+        (i) => i.status !== 'CLOSED' && i.status !== 'RESOLVED',
+      ).length,
       totalIncidentsThisMonth: incidents.length,
       activeAlerts: alerts.length,
       deptScores: deptScores.sort((a, b) => b.score - a.score),
@@ -146,7 +165,10 @@ export class RiskService {
               include: { bodyAreas: true },
               orderBy: { date: 'desc' },
             },
-            workerPrograms: { where: { status: 'ACTIVE' }, include: { sessionLogs: { take: 10, orderBy: { date: 'desc' } } } },
+            workerPrograms: {
+              where: { status: 'ACTIVE' },
+              include: { sessionLogs: { take: 10, orderBy: { date: 'desc' } } },
+            },
           },
         },
       },
@@ -156,11 +178,20 @@ export class RiskService {
 
     const workerScores = dept.users.map((w) => {
       const riskScore = this.computeWorkerRisk(w.checkIns);
-      return { id: w.id, firstName: w.firstName, lastName: w.lastName, riskScore, riskLevel: this.riskLevel(riskScore) };
+      return {
+        id: w.id,
+        firstName: w.firstName,
+        lastName: w.lastName,
+        riskScore,
+        riskLevel: this.riskLevel(riskScore),
+      };
     });
 
     const deptScore = workerScores.length
-      ? Math.round(workerScores.reduce((s, w) => s + w.riskScore, 0) / workerScores.length)
+      ? Math.round(
+          workerScores.reduce((s, w) => s + w.riskScore, 0) /
+            workerScores.length,
+        )
       : 0;
 
     const riskDist = { low: 0, medium: 0, high: 0, critical: 0 };
@@ -181,14 +212,28 @@ export class RiskService {
       .map(([region, count]) => ({ region, count }));
 
     // Program compliance
-    const programCompliance = dept.users.map((w) => {
-      const completed = w.workerPrograms.reduce((s, wp) => s + wp.sessionLogs.reduce((a, l) => a + l.exercisesCompleted, 0), 0);
-      const total = w.workerPrograms.reduce((s, wp) => s + wp.sessionLogs.reduce((a, l) => a + l.exercisesTotal, 0), 0);
-      return total > 0 ? completed / total : null;
-    }).filter((v) => v !== null) as number[];
+    const programCompliance = dept.users
+      .map((w) => {
+        const completed = w.workerPrograms.reduce(
+          (s, wp) =>
+            s + wp.sessionLogs.reduce((a, l) => a + l.exercisesCompleted, 0),
+          0,
+        );
+        const total = w.workerPrograms.reduce(
+          (s, wp) =>
+            s + wp.sessionLogs.reduce((a, l) => a + l.exercisesTotal, 0),
+          0,
+        );
+        return total > 0 ? completed / total : null;
+      })
+      .filter((v) => v !== null) as number[];
 
     const avgCompliance = programCompliance.length
-      ? Math.round((programCompliance.reduce((a, b) => a + b, 0) / programCompliance.length) * 100)
+      ? Math.round(
+          (programCompliance.reduce((a, b) => a + b, 0) /
+            programCompliance.length) *
+            100,
+        )
       : 0;
 
     return {
@@ -207,7 +252,15 @@ export class RiskService {
   async checkAndCreateAlerts(organizationId: string) {
     const summary = await this.getOrgSummary(organizationId);
 
-    const alertsToCreate: { organizationId: string; departmentId?: string; type: string; title: string; message: string; threshold: number; currentValue: number }[] = [];
+    const alertsToCreate: {
+      organizationId: string;
+      departmentId?: string;
+      type: string;
+      title: string;
+      message: string;
+      threshold: number;
+      currentValue: number;
+    }[] = [];
 
     // Org risk threshold
     if (summary.orgRiskScore >= 65) {
@@ -271,14 +324,22 @@ export class RiskService {
     });
   }
 
-  async acknowledgeAlert(alertId: string, userId: string, organizationId: string) {
+  async acknowledgeAlert(
+    alertId: string,
+    userId: string,
+    _organizationId: string,
+  ) {
     return this.prisma.alert.update({
       where: { id: alertId },
-      data: { status: 'ACKNOWLEDGED', acknowledgedBy: userId, acknowledgedAt: new Date() },
+      data: {
+        status: 'ACKNOWLEDGED',
+        acknowledgedBy: userId,
+        acknowledgedAt: new Date(),
+      },
     });
   }
 
-  async resolveAlert(alertId: string, organizationId: string) {
+  async resolveAlert(alertId: string, _organizationId: string) {
     return this.prisma.alert.update({
       where: { id: alertId },
       data: { status: 'RESOLVED', resolvedAt: new Date() },
@@ -308,11 +369,22 @@ export class RiskService {
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([week, vals]) => ({
         week,
-        score: vals.length ? Math.min(100, Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10)) : 0,
+        score: vals.length
+          ? Math.min(
+              100,
+              Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10),
+            )
+          : 0,
       }));
   }
 
-  private async persistRiskScore(data: { entityType: string; entityId: string; organizationId: string; score: number; factors: any }) {
+  private async persistRiskScore(data: {
+    entityType: string;
+    entityId: string;
+    organizationId: string;
+    score: number;
+    factors: any;
+  }) {
     await this.prisma.riskScore.create({
       data: {
         entityType: data.entityType as any,
@@ -327,9 +399,13 @@ export class RiskService {
   private computeWorkerRisk(checkins: any[]): number {
     if (!checkins.length) return 0;
     const recent = checkins.slice(0, 7);
-    const allIntensities = recent.flatMap((c: any) => (c.bodyAreas ?? []).map((a: any) => a.intensity));
+    const allIntensities = recent.flatMap((c: any) =>
+      (c.bodyAreas ?? []).map((a: any) => a.intensity),
+    );
     if (!allIntensities.length) return 5;
-    const avg = allIntensities.reduce((a: number, b: number) => a + b, 0) / allIntensities.length;
+    const avg =
+      allIntensities.reduce((a: number, b: number) => a + b, 0) /
+      allIntensities.length;
     return Math.min(100, Math.round(avg * 10));
   }
 

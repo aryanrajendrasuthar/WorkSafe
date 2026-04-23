@@ -33,8 +33,6 @@ import { NotificationsModule } from './notifications/notifications.module';
     HrModule,
     NotificationsModule,
   ],
-  providers: [
-    { provide: APP_INTERCEPTOR, useClass: AuditLogInterceptor },
-  ],
+  providers: [{ provide: APP_INTERCEPTOR, useClass: AuditLogInterceptor }],
 })
 export class AppModule {}

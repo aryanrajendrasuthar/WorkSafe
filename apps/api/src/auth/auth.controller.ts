@@ -46,7 +46,9 @@ export class AuthController {
   @ApiOperation({ summary: 'Login with email and password' })
   @ApiBody({ type: LoginDto })
   async login(@Request() req: { user: Express.User }) {
-    return this.authService.login(req.user as Parameters<AuthService['login']>[0]);
+    return this.authService.login(
+      req.user as Parameters<AuthService['login']>[0],
+    );
   }
 
   @Post('refresh')
@@ -130,7 +132,10 @@ export class AuthController {
   @Roles(Role.COMPANY_ADMIN, Role.HR_ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create an invite token for a new user' })
-  async createInvite(@Body() dto: CreateInviteDto, @CurrentUser() user: { organizationId: string }) {
+  async createInvite(
+    @Body() dto: CreateInviteDto,
+    @CurrentUser() user: { organizationId: string },
+  ) {
     return this.authService.createInvite(dto, user.organizationId);
   }
 
@@ -157,6 +162,10 @@ export class AuthController {
     @CurrentUser() user: { id: string },
     @Body() body: { currentPassword: string; newPassword: string },
   ) {
-    return this.authService.changePassword(user.id, body.currentPassword, body.newPassword);
+    return this.authService.changePassword(
+      user.id,
+      body.currentPassword,
+      body.newPassword,
+    );
   }
 }

@@ -1,4 +1,9 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
+import {
+  Injectable,
+  NestInterceptor,
+  ExecutionContext,
+  CallHandler,
+} from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -25,11 +30,14 @@ export class AuditLogInterceptor implements NestInterceptor {
 
     if (!MUTATING_METHODS.has(method)) return next.handle();
 
-    const user = req.user as { id?: string; organizationId?: string } | undefined;
+    const user = req.user as
+      | { id?: string; organizationId?: string }
+      | undefined;
     if (!user?.id || !user?.organizationId) return next.handle();
 
     const urlParts = req.url.split('/').filter(Boolean);
-    const resourceType = RESOURCE_MAP[urlParts[0]] ?? urlParts[0]?.toUpperCase() ?? 'UNKNOWN';
+    const resourceType =
+      RESOURCE_MAP[urlParts[0]] ?? urlParts[0]?.toUpperCase() ?? 'UNKNOWN';
     const action = `${method}:${req.url.split('?')[0]}`;
 
     return next.handle().pipe(

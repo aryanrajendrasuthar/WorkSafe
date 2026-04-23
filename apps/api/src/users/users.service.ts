@@ -44,17 +44,30 @@ export class UsersService {
         avatarUrl: true,
         isOnboarded: true,
         department: { select: { id: true, name: true } },
-        jobProfile: { select: { title: true, jobCategory: true, physicalDemandLevel: true } },
+        jobProfile: {
+          select: { title: true, jobCategory: true, physicalDemandLevel: true },
+        },
       },
       orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }],
     });
   }
 
-  async updateUser(id: string, data: { firstName?: string; lastName?: string; avatarUrl?: string; departmentId?: string }) {
+  async updateUser(
+    id: string,
+    data: {
+      firstName?: string;
+      lastName?: string;
+      avatarUrl?: string;
+      departmentId?: string;
+    },
+  ) {
     return this.prisma.user.update({ where: { id }, data });
   }
 
   async deactivateUser(id: string) {
-    return this.prisma.user.update({ where: { id }, data: { isActive: false } });
+    return this.prisma.user.update({
+      where: { id },
+      data: { isActive: false },
+    });
   }
 }

@@ -74,7 +74,9 @@ export class WorkersService {
       this.prisma.workerProgram.findMany({
         where: { userId, status: 'ACTIVE' },
         include: {
-          program: { select: { id: true, name: true, goal: true, durationWeeks: true } },
+          program: {
+            select: { id: true, name: true, goal: true, durationWeeks: true },
+          },
           sessionLogs: { orderBy: { date: 'desc' }, take: 1 },
         },
       }),

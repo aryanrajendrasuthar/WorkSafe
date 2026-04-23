@@ -36,7 +36,7 @@ export class TherapistService {
       const riskScore = this.computeWorkerRisk(recentCheckins);
       const trend = this.computeTrend(recentCheckins);
 
-      const predictedToEscalate = trend === 'up' && (riskScore >= 30);
+      const predictedToEscalate = trend === 'up' && riskScore >= 30;
 
       return {
         id: w.id,
@@ -75,7 +75,10 @@ export class TherapistService {
           include: {
             program: {
               include: {
-                programExercises: { include: { exercise: true }, orderBy: { order: 'asc' } },
+                programExercises: {
+                  include: { exercise: true },
+                  orderBy: { order: 'asc' },
+                },
               },
             },
             sessionLogs: { orderBy: { date: 'desc' }, take: 5 },
@@ -104,7 +107,10 @@ export class TherapistService {
     const painTrend = Object.entries(trendMap).map(([date, parts]) => ({
       date,
       ...Object.fromEntries(
-        Object.entries(parts).map(([p, vals]) => [p, Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10]),
+        Object.entries(parts).map(([p, vals]) => [
+          p,
+          Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10,
+        ]),
       ),
     }));
 
@@ -126,7 +132,10 @@ export class TherapistService {
     const workers = await this.prisma.user.findMany({
       where: { organizationId, role: 'WORKER', isActive: true },
       select: {
-        id: true, firstName: true, lastName: true, avatarUrl: true,
+        id: true,
+        firstName: true,
+        lastName: true,
+        avatarUrl: true,
         department: { select: { name: true } },
         checkIns: {
           where: { date: { gte: sevenDaysAgo } },
@@ -136,7 +145,16 @@ export class TherapistService {
       },
     });
 
-    const escalations: { workerId: string; firstName: string; lastName: string; avatarUrl: string | null; department: string | null; delta: number; latestIntensity: number; checkinCount: number }[] = [];
+    const escalations: {
+      workerId: string;
+      firstName: string;
+      lastName: string;
+      avatarUrl: string | null;
+      department: string | null;
+      delta: number;
+      latestIntensity: number;
+      checkinCount: number;
+    }[] = [];
     for (const w of workers) {
       if (w.checkIns.length < 3) continue;
 
@@ -146,7 +164,9 @@ export class TherapistService {
       const secondHalf = w.checkIns.slice(half);
 
       const avg = (checkins: typeof w.checkIns) => {
-        const all = checkins.flatMap((c) => c.bodyAreas.map((a) => a.intensity));
+        const all = checkins.flatMap((c) =>
+          c.bodyAreas.map((a) => a.intensity),
+        );
         return all.length ? all.reduce((a, b) => a + b, 0) / all.length : 0;
       };
 
@@ -171,9 +191,13 @@ export class TherapistService {
   private computeWorkerRisk(checkins: any[]): number {
     if (!checkins.length) return 0;
     const recent = checkins.slice(0, 7);
-    const allIntensities = recent.flatMap((c: any) => (c.bodyAreas ?? []).map((a: any) => a.intensity));
+    const allIntensities = recent.flatMap((c: any) =>
+      (c.bodyAreas ?? []).map((a: any) => a.intensity),
+    );
     if (!allIntensities.length) return 5;
-    const avg = allIntensities.reduce((a: number, b: number) => a + b, 0) / allIntensities.length;
+    const avg =
+      allIntensities.reduce((a: number, b: number) => a + b, 0) /
+      allIntensities.length;
     return Math.min(100, Math.round(avg * 10));
   }
 
@@ -181,7 +205,9 @@ export class TherapistService {
     if (checkins.length < 4) return 'stable';
     const half = Math.floor(checkins.length / 2);
     const avg = (arr: any[]) => {
-      const vals = arr.flatMap((c) => (c.bodyAreas ?? []).map((a: any) => a.intensity));
+      const vals = arr.flatMap((c) =>
+        (c.bodyAreas ?? []).map((a: any) => a.intensity),
+      );
       return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
     };
     const delta = avg(checkins.slice(0, half)) - avg(checkins.slice(half));

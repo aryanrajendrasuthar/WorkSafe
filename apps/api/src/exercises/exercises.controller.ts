@@ -19,7 +19,12 @@ export class ExercisesController {
     @Query('goal') goal?: ProgramGoal,
     @Query('search') search?: string,
   ) {
-    return this.exercisesService.findAll({ bodyPart, difficulty, goal, search });
+    return this.exercisesService.findAll({
+      bodyPart,
+      difficulty,
+      goal,
+      search,
+    });
   }
 
   @Get(':id')

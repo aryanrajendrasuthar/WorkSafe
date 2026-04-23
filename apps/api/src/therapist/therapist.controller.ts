@@ -27,7 +27,9 @@ export class TherapistController {
   }
 
   @Get('escalations')
-  @ApiOperation({ summary: 'Get workers with escalating pain trends (7-day delta)' })
+  @ApiOperation({
+    summary: 'Get workers with escalating pain trends (7-day delta)',
+  })
   getEscalations(@CurrentUser() user: any) {
     return this.therapistService.getEscalations(user.organizationId);
   }

@@ -6,7 +6,11 @@ import { CreateIncidentDto } from './dto/create-incident.dto';
 export class IncidentsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(reportedById: string, organizationId: string, dto: CreateIncidentDto) {
+  async create(
+    reportedById: string,
+    organizationId: string,
+    dto: CreateIncidentDto,
+  ) {
     const worker = await this.prisma.user.findFirst({
       where: { id: dto.workerId, organizationId },
     });
@@ -33,7 +37,9 @@ export class IncidentsService {
     return this.prisma.incident.findMany({
       where: { organizationId, ...(workerId ? { userId: workerId } : {}) },
       include: {
-        worker: { select: { firstName: true, lastName: true, avatarUrl: true } },
+        worker: {
+          select: { firstName: true, lastName: true, avatarUrl: true },
+        },
         reportedBy: { select: { firstName: true, lastName: true } },
         rtwMilestones: { orderBy: { createdAt: 'asc' } },
       },
@@ -45,7 +51,14 @@ export class IncidentsService {
     const incident = await this.prisma.incident.findFirst({
       where: { id, organizationId },
       include: {
-        worker: { select: { firstName: true, lastName: true, avatarUrl: true, department: { select: { name: true } } } },
+        worker: {
+          select: {
+            firstName: true,
+            lastName: true,
+            avatarUrl: true,
+            department: { select: { name: true } },
+          },
+        },
         reportedBy: { select: { firstName: true, lastName: true } },
         rtwMilestones: { orderBy: { createdAt: 'asc' } },
       },
@@ -61,8 +74,14 @@ export class IncidentsService {
     });
   }
 
-  async addMilestone(incidentId: string, organizationId: string, dto: { milestoneType: string; targetDate?: string; notes?: string }) {
-    const incident = await this.prisma.incident.findFirst({ where: { id: incidentId, organizationId } });
+  async addMilestone(
+    incidentId: string,
+    organizationId: string,
+    dto: { milestoneType: string; targetDate?: string; notes?: string },
+  ) {
+    const incident = await this.prisma.incident.findFirst({
+      where: { id: incidentId, organizationId },
+    });
     if (!incident) throw new NotFoundException('Incident not found');
 
     return this.prisma.rTWMilestone.create({
@@ -76,7 +95,11 @@ export class IncidentsService {
     });
   }
 
-  async clearMilestone(milestoneId: string, clearedById: string, notes?: string) {
+  async clearMilestone(
+    milestoneId: string,
+    clearedById: string,
+    notes?: string,
+  ) {
     return this.prisma.rTWMilestone.update({
       where: { id: milestoneId },
       data: {
@@ -94,9 +117,20 @@ export class IncidentsService {
     const end = new Date(`${y + 1}-01-01`);
 
     const incidents = await this.prisma.incident.findMany({
-      where: { organizationId, isOshaRecordable: true, incidentDate: { gte: start, lt: end } },
+      where: {
+        organizationId,
+        isOshaRecordable: true,
+        incidentDate: { gte: start, lt: end },
+      },
       include: {
-        worker: { select: { firstName: true, lastName: true, department: { select: { name: true } }, jobProfile: { select: { title: true } } } },
+        worker: {
+          select: {
+            firstName: true,
+            lastName: true,
+            department: { select: { name: true } },
+            jobProfile: { select: { title: true } },
+          },
+        },
         reportedBy: { select: { firstName: true, lastName: true } },
         rtwMilestones: true,
       },

@@ -33,7 +33,10 @@ export class CheckinsController {
   @Get('trend')
   @ApiOperation({ summary: 'Get pain trend by body area (chart data)' })
   getTrend(@CurrentUser() user: any, @Query('days') days?: string) {
-    return this.checkinsService.getPainTrend(user.id, days ? parseInt(days) : 30);
+    return this.checkinsService.getPainTrend(
+      user.id,
+      days ? parseInt(days) : 30,
+    );
   }
 
   @Get('streak')

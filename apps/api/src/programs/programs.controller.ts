@@ -34,7 +34,11 @@ export class ProgramsController {
   @Roles('THERAPIST', 'COMPANY_ADMIN')
   @ApiOperation({ summary: 'Create a new program' })
   createProgram(@CurrentUser() user: any, @Body() dto: CreateProgramDto) {
-    return this.programsService.createProgram(user.organizationId, user.id, dto);
+    return this.programsService.createProgram(
+      user.organizationId,
+      user.id,
+      dto,
+    );
   }
 
   @Post(':programId/assign')
@@ -46,7 +50,12 @@ export class ProgramsController {
     @Param('programId') programId: string,
     @Body() dto: AssignProgramDto,
   ) {
-    return this.programsService.assignProgram(programId, user.id, user.organizationId, dto);
+    return this.programsService.assignProgram(
+      programId,
+      user.id,
+      user.organizationId,
+      dto,
+    );
   }
 
   @Get(':id')
@@ -67,7 +76,10 @@ export class ProgramsController {
 
   @Get(':workerProgramId/sessions')
   @ApiOperation({ summary: 'Get session history for a worker program' })
-  getSessionHistory(@CurrentUser() user: any, @Param('workerProgramId') workerProgramId: string) {
+  getSessionHistory(
+    @CurrentUser() user: any,
+    @Param('workerProgramId') workerProgramId: string,
+  ) {
     return this.programsService.getSessionHistory(workerProgramId, user.id);
   }
 }

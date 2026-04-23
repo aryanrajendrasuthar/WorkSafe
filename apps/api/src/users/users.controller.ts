@@ -1,4 +1,12 @@
-import { Controller, Get, Put, Body, Param, UseGuards, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Put,
+  Body,
+  Param,
+  UseGuards,
+  Query,
+} from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -35,7 +43,13 @@ export class UsersController {
   @ApiOperation({ summary: 'Update user profile' })
   async update(
     @Param('id') id: string,
-    @Body() body: { firstName?: string; lastName?: string; avatarUrl?: string; departmentId?: string },
+    @Body()
+    body: {
+      firstName?: string;
+      lastName?: string;
+      avatarUrl?: string;
+      departmentId?: string;
+    },
   ) {
     return this.usersService.updateUser(id, body);
   }
