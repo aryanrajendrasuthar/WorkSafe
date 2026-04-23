@@ -23,7 +23,7 @@ const TYPE_ICONS: Record<string, { icon: typeof AlertTriangle; bg: string; color
 export default function SafetyAlerts() {
   const [statusFilter, setStatusFilter] = useState('');
 
-  const { data: alerts = [], isLoading, refetch } = useQuery({
+  const { data: alerts = [], isLoading } = useQuery({
     queryKey: ['risk', 'alerts'],
     queryFn: () => api.get('/risk/alerts').then((r) => r.data.data),
   });

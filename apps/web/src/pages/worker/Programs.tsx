@@ -1,15 +1,14 @@
 import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, CheckCircle, SkipForward, Clock, RotateCcw, Trophy, ChevronRight, Target } from 'lucide-react';
+import { Play, CheckCircle, SkipForward, Clock, Trophy, Target } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 
 interface ProgramExercise {
   id: string;

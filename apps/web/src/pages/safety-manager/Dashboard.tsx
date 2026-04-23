@@ -15,7 +15,6 @@ import {
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
 
-const RISK_COLORS = { low: '#22c55e', medium: '#f59e0b', high: '#f97316', critical: '#ef4444' };
 const BODY_LABELS: Record<string, string> = {
   LOWER_BACK: 'Lower Back', UPPER_BACK: 'Upper Back', LEFT_SHOULDER: 'L. Shoulder',
   RIGHT_SHOULDER: 'R. Shoulder', HEAD_NECK: 'Neck', LEFT_WRIST_HAND: 'L. Wrist',
@@ -31,13 +30,6 @@ function riskColor(score: number) {
   if (score < 50) return '#f59e0b';
   if (score < 75) return '#f97316';
   return '#ef4444';
-}
-
-function riskLevel(score: number) {
-  if (score < 25) return 'low';
-  if (score < 50) return 'medium';
-  if (score < 75) return 'high';
-  return 'critical';
 }
 
 const RISK_VARIANT: Record<string, any> = {

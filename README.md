@@ -151,13 +151,15 @@ These are created by the seed (`pnpm --filter api run db:seed`):
 
 | Role | Email | Password |
 |---|---|---|
-| Worker | worker@demo.worksafe.com | Password123! |
-| Therapist | therapist@demo.worksafe.com | Password123! |
-| Safety Manager | safety@demo.worksafe.com | Password123! |
+| Worker | worker@gmail.com | Password123! |
+| Therapist | therapist@gmail.com | Password123! |
+| Safety Manager | safety@gmail.com | Password123! |
 | HR Admin | hr@demo.worksafe.com | Password123! |
-| Company Admin | admin@demo.worksafe.com | Password123! |
+| Company Admin (primary) | aryanrajendrasuthar@gmail.com | Aryan@53 |
 
 The seed is idempotent — safe to run multiple times.
+
+> **Primary admin lock:** The `aryanrajendrasuthar@gmail.com` account cannot have its role changed or be deactivated by anyone in the organization. This is enforced in the backend.
 
 ---
 
@@ -189,7 +191,9 @@ The seed is idempotent — safe to run multiple times.
 - **Invite management** — create invite links by role, copy link, revoke
 
 ### Company Admin
+- **Team Members** — full employee list with role change dropdowns; primary admin account is permanently locked and cannot be modified
 - **Audit log** — full history of all mutating API actions with user, IP, and resource
+- **Org settings** — update organization name, industry, view workforce summary and risk thresholds
 - **Billing UI** — subscription tier display and plan comparison (payment not wired up)
 
 ---
@@ -227,7 +231,7 @@ Full Swagger docs: http://localhost:3001/api/docs
 
 **Auth**
 ```
-POST /auth/register          Create new org + admin account
+POST /auth/register          Register as WORKER in the existing organization
 POST /auth/login             Email + password login
 POST /auth/refresh           Refresh access token
 POST /auth/logout            Invalidate refresh token
@@ -336,7 +340,7 @@ apps/web/src/
     therapist/                Dashboard, Workers, WorkerDetail, Programs, ProgramBuilder, Incidents, IncidentDetail
     safety-manager/           Dashboard, Departments, DepartmentDetail, Alerts, OshaReports
     hr-admin/                 Dashboard, Employees, DepartmentsPage, Invites
-    company-admin/            Dashboard, AuditLog, Billing
+    company-admin/            Dashboard, Users (role management), Settings, AuditLog, Billing
   components/
     layout/                   AppLayout, AppSidebar, TopBar
     ui/                       shadcn/ui components
@@ -362,6 +366,7 @@ apps/web/src/
 | `v0.4.0-sprint4` | Risk Engine | Org risk intelligence, safety manager dashboard, alert system |
 | `v0.5.0-sprint5` | Enterprise | RTW workflow, OSHA reports, HR admin, audit logs |
 | `v1.0.0` | Polish | Dark mode, PWA, code splitting, predictive risk, DB indexes, accessibility |
+| post-v1.0 | Fixes & Hardening | Role management UI, primary admin lock, CI lint fixes, credential updates |
 
 ---
 

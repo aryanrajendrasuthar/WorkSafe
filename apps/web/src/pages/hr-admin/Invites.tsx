@@ -43,7 +43,6 @@ export default function HRInvites() {
 
   const pendingInvites = invites.filter((i: any) => !i.usedAt && new Date(i.expiresAt) > new Date());
   const usedInvites = invites.filter((i: any) => i.usedAt);
-  const expiredInvites = invites.filter((i: any) => !i.usedAt && new Date(i.expiresAt) <= new Date());
 
   return (
     <div className="space-y-5 max-w-2xl">

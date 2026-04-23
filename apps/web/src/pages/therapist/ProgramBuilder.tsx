@@ -9,7 +9,6 @@ import { queryClient } from '@/lib/queryClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
 
 const JOB_CATEGORIES = ['DESK', 'LIGHT_PHYSICAL', 'HEAVY_PHYSICAL', 'DRIVING', 'HEALTHCARE', 'RETAIL', 'CONSTRUCTION', 'MANUFACTURING'];
 const GOALS = ['PREVENTION', 'RECOVERY', 'STRENGTHENING', 'FLEXIBILITY', 'CONDITIONING'];
@@ -99,7 +98,7 @@ export default function ProgramBuilder() {
       description: description || undefined,
       jobCategory,
       goal,
-      bodyRegions: [...new Set(exercises.flatMap((e) => []))],
+      bodyRegions: [...new Set(exercises.flatMap(() => []))],
       durationWeeks,
       exercises: exercises.map((e) => ({
         exerciseId: e.exerciseId,

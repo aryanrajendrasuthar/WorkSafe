@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { cn } from '@/lib/utils';
+;
 
 const RISK_VARIANT: Record<string, any> = {
   low: 'risk_low', medium: 'risk_medium', high: 'risk_high', critical: 'risk_critical',

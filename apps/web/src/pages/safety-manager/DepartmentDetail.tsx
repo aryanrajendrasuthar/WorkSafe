@@ -123,7 +123,7 @@ export default function DepartmentDetail() {
           <CardContent>
             {dept.topRegions?.length > 0 ? (
               <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={dept.topRegions.map((r: any, i: number) => ({ ...r, label: BODY_LABELS[r.region] ?? r.region }))} layout="vertical">
+                <BarChart data={dept.topRegions.map((r: any) => ({ ...r, label: BODY_LABELS[r.region] ?? r.region }))} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" horizontal={false} />
                   <XAxis type="number" tick={{ fontSize: 10, fill: '#9ca3af' }} />
                   <YAxis type="category" dataKey="label" tick={{ fontSize: 11, fill: '#6b7280' }} width={80} />

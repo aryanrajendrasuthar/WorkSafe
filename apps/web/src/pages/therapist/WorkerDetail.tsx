@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import {
-  ArrowLeft, AlertTriangle, Dumbbell, Calendar, FileText,
+  ArrowLeft, Dumbbell, Calendar,
   ChevronDown, ChevronUp, Plus, Target
 } from 'lucide-react';
 import { toast } from 'sonner';

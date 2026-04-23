@@ -6,7 +6,7 @@ import { Plus, AlertTriangle, ChevronDown, FileText, ExternalLink } from 'lucide
 import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 

@@ -5,7 +5,6 @@ import { Link } from 'react-router-dom';
 import { api } from '@/lib/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 
 const GOAL_COLORS: Record<string, string> = {
   PREVENTION: 'bg-blue-100 text-blue-700',
