@@ -15,7 +15,6 @@ const registerSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
   lastName: z.string().min(2, 'Last name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email'),
-  organizationName: z.string().min(2, 'Company name must be at least 2 characters'),
   password: z.string()
     .min(8, 'Password must be at least 8 characters')
     .regex(/[A-Z]/, 'Must contain at least one uppercase letter')
@@ -54,12 +53,11 @@ export default function Register() {
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email,
-        organizationName: data.organizationName,
         password: data.password,
       });
       const { user, tokens } = res.data.data;
       setAuth(user, tokens.accessToken, tokens.refreshToken);
-      navigate(user.role === 'WORKER' ? '/onboarding' : '/admin/dashboard');
+      navigate('/onboarding');
     } catch (err: unknown) {
       const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setError(message || 'Registration failed. Please try again.');
@@ -83,8 +81,8 @@ export default function Register() {
               </div>
               <span className="text-xl font-bold text-gray-900">WorkSafe</span>
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900">Start protecting your workforce</h1>
-            <p className="text-gray-600 mt-1 text-sm">Free 14-day trial. No credit card required.</p>
+            <h1 className="text-2xl font-bold text-gray-900">Create your account</h1>
+            <p className="text-gray-600 mt-1 text-sm">Join WorkSafe and start your wellness journey.</p>
           </div>
 
           {error && (
@@ -132,17 +130,6 @@ export default function Register() {
                 className={errors.email ? 'border-red-500' : ''}
               />
               {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="organizationName">Company name</Label>
-              <Input
-                id="organizationName"
-                placeholder="Acme Manufacturing Co."
-                {...register('organizationName')}
-                className={errors.organizationName ? 'border-red-500' : ''}
-              />
-              {errors.organizationName && <p className="text-xs text-red-500">{errors.organizationName.message}</p>}
             </div>
 
             <div className="space-y-1.5">
@@ -201,7 +188,7 @@ export default function Register() {
             </p>
 
             <Button type="submit" variant="brand" size="lg" className="w-full" loading={isSubmitting}>
-              Create free account
+              Create account
             </Button>
           </form>
 

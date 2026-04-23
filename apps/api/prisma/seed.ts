@@ -39,31 +39,32 @@ async function main() {
     create: { id: 'dept-003', organizationId: org.id, name: 'Assembly Line', location: 'Building C' },
   });
 
-  // ─── Seed password ─────────────────────────────────────────────────────────
+  // ─── Seed passwords ────────────────────────────────────────────────────────
   const passwordHash = await bcrypt.hash('Password123!', 12);
+  const adminPasswordHash = await bcrypt.hash('Aryan@53', 12);
 
   // ─── Users (one per role) ──────────────────────────────────────────────────
   const adminUser = await prisma.user.upsert({
-    where: { email: 'admin@demo.worksafe.com' },
-    update: { passwordHash },
+    where: { email: 'aryanrajendrasuthar@gmail.com' },
+    update: { passwordHash: adminPasswordHash },
     create: {
-      email: 'admin@demo.worksafe.com', firstName: 'Sarah', lastName: 'Chen',
-      passwordHash, role: Role.COMPANY_ADMIN, organizationId: org.id, isOnboarded: true,
+      email: 'aryanrajendrasuthar@gmail.com', firstName: 'Aryan', lastName: 'Suthar',
+      passwordHash: adminPasswordHash, role: Role.COMPANY_ADMIN, organizationId: org.id, isOnboarded: true,
     },
   });
   const therapistUser = await prisma.user.upsert({
-    where: { email: 'therapist@demo.worksafe.com' },
+    where: { email: 'therapist@gmail.com' },
     update: { passwordHash },
     create: {
-      email: 'therapist@demo.worksafe.com', firstName: 'Dr. Marcus', lastName: 'Johnson',
+      email: 'therapist@gmail.com', firstName: 'Dr. Marcus', lastName: 'Johnson',
       passwordHash, role: Role.THERAPIST, organizationId: org.id, isOnboarded: true,
     },
   });
   const safetyUser = await prisma.user.upsert({
-    where: { email: 'safety@demo.worksafe.com' },
+    where: { email: 'safety@gmail.com' },
     update: { passwordHash },
     create: {
-      email: 'safety@demo.worksafe.com', firstName: 'Lisa', lastName: 'Rodriguez',
+      email: 'safety@gmail.com', firstName: 'Lisa', lastName: 'Rodriguez',
       passwordHash, role: Role.SAFETY_MANAGER, organizationId: org.id, isOnboarded: true,
     },
   });
@@ -76,10 +77,10 @@ async function main() {
     },
   });
   const workerUser = await prisma.user.upsert({
-    where: { email: 'worker@demo.worksafe.com' },
+    where: { email: 'worker@gmail.com' },
     update: { passwordHash },
     create: {
-      email: 'worker@demo.worksafe.com', firstName: 'Alex', lastName: 'Thompson',
+      email: 'worker@gmail.com', firstName: 'Alex', lastName: 'Thompson',
       passwordHash, role: Role.WORKER, organizationId: org.id, departmentId: deptWarehouse.id,
       isOnboarded: true,
     },
@@ -242,11 +243,11 @@ async function main() {
   });
 
   console.log('\n✅ Seed complete! Demo accounts:');
-  console.log('  admin@demo.worksafe.com       / Password123!  (Company Admin)');
-  console.log('  therapist@demo.worksafe.com   / Password123!  (Therapist)');
-  console.log('  safety@demo.worksafe.com      / Password123!  (Safety Manager)');
+  console.log('  aryanrajendrasuthar@gmail.com / Aryan@53       (Company Admin)');
+  console.log('  therapist@gmail.com           / Password123!  (Therapist)');
+  console.log('  safety@gmail.com              / Password123!  (Safety Manager)');
   console.log('  hr@demo.worksafe.com          / Password123!  (HR Admin)');
-  console.log('  worker@demo.worksafe.com      / Password123!  (Worker)');
+  console.log('  worker@gmail.com              / Password123!  (Worker)');
   console.log(`\n  API: http://localhost:3001`);
   console.log(`  Swagger: http://localhost:3001/api/docs`);
 

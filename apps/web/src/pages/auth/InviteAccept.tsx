@@ -63,11 +63,17 @@ export default function InviteAccept() {
       const { user, tokens } = res.data.data;
       setAuth(user, tokens.accessToken, tokens.refreshToken);
 
-      if (!user.isOnboarded && user.role === 'WORKER') {
-        navigate('/onboarding');
-      } else {
-        navigate(`/${user.role.toLowerCase().replace('_', '-')}/dashboard`);
-      }
+      const roleRoutes: Record<string, string> = {
+        WORKER: '/onboarding',
+        THERAPIST: '/therapist/dashboard',
+        SAFETY_MANAGER: '/safety/dashboard',
+        HR_ADMIN: '/hr/dashboard',
+        COMPANY_ADMIN: '/admin/dashboard',
+      };
+      const dest = (!user.isOnboarded && user.role === 'WORKER')
+        ? '/onboarding'
+        : roleRoutes[user.role] ?? '/';
+      navigate(dest);
     } catch (err: unknown) {
       const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       setSubmitError(message || 'Failed to accept invite.');

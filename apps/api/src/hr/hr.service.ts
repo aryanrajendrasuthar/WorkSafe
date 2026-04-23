@@ -1,9 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
+
+const PROTECTED_EMAIL = 'aryanrajendrasuthar@gmail.com';
 
 @Injectable()
 export class HrService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private config: ConfigService,
+  ) {}
 
   // ── Departments ──────────────────────────────────────────────────────────────
 
@@ -61,6 +67,9 @@ export class HrService {
   async updateUserRole(id: string, organizationId: string, role: string) {
     const user = await this.prisma.user.findFirst({ where: { id, organizationId } });
     if (!user) throw new NotFoundException('User not found');
+    if (user.email.toLowerCase() === PROTECTED_EMAIL) {
+      throw new ForbiddenException('The primary administrator account cannot be modified.');
+    }
     return this.prisma.user.update({ where: { id }, data: { role: role as any } });
   }
 
@@ -73,6 +82,9 @@ export class HrService {
   async setUserActive(id: string, organizationId: string, isActive: boolean) {
     const user = await this.prisma.user.findFirst({ where: { id, organizationId } });
     if (!user) throw new NotFoundException('User not found');
+    if (user.email.toLowerCase() === PROTECTED_EMAIL) {
+      throw new ForbiddenException('The primary administrator account cannot be modified.');
+    }
     return this.prisma.user.update({ where: { id }, data: { isActive } });
   }
 

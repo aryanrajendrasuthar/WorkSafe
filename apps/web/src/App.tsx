@@ -54,6 +54,7 @@ const HRInvites = lazy(() => import('./pages/hr-admin/Invites'));
 
 // Company Admin pages — lazy loaded
 const CompanyAdminDashboard = lazy(() => import('./pages/company-admin/Dashboard'));
+const AdminUsers = lazy(() => import('./pages/company-admin/Users'));
 const AuditLogPage = lazy(() => import('./pages/company-admin/AuditLog'));
 const BillingPage = lazy(() => import('./pages/company-admin/Billing'));
 const CompanySettings = lazy(() => import('./pages/company-admin/Settings'));
@@ -171,6 +172,7 @@ export default function App() {
             <Route path="dashboard" element={<Suspense fallback={<PageLoader />}><SafetyDashboard /></Suspense>} />
             <Route path="departments" element={<Suspense fallback={<PageLoader />}><SafetyDepartments /></Suspense>} />
             <Route path="departments/:id" element={<Suspense fallback={<PageLoader />}><DepartmentDetail /></Suspense>} />
+            <Route path="risk" element={<Navigate to="/safety/dashboard" replace />} />
             <Route path="alerts" element={<Suspense fallback={<PageLoader />}><SafetyAlerts /></Suspense>} />
             <Route path="incidents" element={<Suspense fallback={<PageLoader />}><SafetyIncidents /></Suspense>} />
             <Route path="reports" element={<Suspense fallback={<PageLoader />}><OshaReports /></Suspense>} />
@@ -201,7 +203,7 @@ export default function App() {
             }
           >
             <Route path="dashboard" element={<Suspense fallback={<PageLoader />}><CompanyAdminDashboard /></Suspense>} />
-            <Route path="users" element={<Suspense fallback={<PageLoader />}><HREmployees /></Suspense>} />
+            <Route path="users" element={<Suspense fallback={<PageLoader />}><AdminUsers /></Suspense>} />
             <Route path="departments" element={<Suspense fallback={<PageLoader />}><HRDepartments /></Suspense>} />
             <Route path="billing" element={<Suspense fallback={<PageLoader />}><BillingPage /></Suspense>} />
             <Route path="settings" element={<Suspense fallback={<PageLoader />}><CompanySettings /></Suspense>} />

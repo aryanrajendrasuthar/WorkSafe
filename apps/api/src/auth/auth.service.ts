@@ -42,22 +42,19 @@ export class AuthService {
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
 
-    const org = await this.prisma.organization.create({
-      data: {
-        name: dto.organizationName || `${dto.firstName}'s Organization`,
-      },
-    });
+    // All self-registrations join the primary org as a WORKER
+    const org = await this.prisma.organization.findFirst({ orderBy: { createdAt: 'asc' } });
+    if (!org) throw new BadRequestException('No organization found. Contact your administrator.');
 
-    const role = dto.role || Role.COMPANY_ADMIN;
     const user = await this.prisma.user.create({
       data: {
         email: dto.email,
         firstName: dto.firstName,
         lastName: dto.lastName,
         passwordHash,
-        role,
+        role: Role.WORKER,
         organizationId: org.id,
-        isOnboarded: role !== Role.WORKER,
+        isOnboarded: false,
       },
     });
 
@@ -179,6 +176,7 @@ export class AuthService {
         passwordHash,
         role: invite.role,
         organizationId: invite.organizationId,
+        isOnboarded: invite.role !== Role.WORKER,
       },
     });
 

@@ -214,10 +214,10 @@ export default function Login() {
           <div className="mt-6 p-3 bg-blue-50 rounded-lg border border-blue-100">
             <p className="text-xs font-semibold text-blue-700 mb-1.5">Demo credentials</p>
             <div className="grid grid-cols-2 gap-1 text-xs text-blue-600">
-              <span>worker@demo.worksafe.com</span><span>Password123!</span>
-              <span>therapist@demo.worksafe.com</span><span>Password123!</span>
-              <span>safety@demo.worksafe.com</span><span>Password123!</span>
-              <span>admin@demo.worksafe.com</span><span>Password123!</span>
+              <span>worker@gmail.com</span><span>Password123!</span>
+              <span>therapist@gmail.com</span><span>Password123!</span>
+              <span>safety@gmail.com</span><span>Password123!</span>
+              <span>aryanrajendrasuthar@gmail.com</span><span>Aryan@53</span>
             </div>
           </div>
         </motion.div>
