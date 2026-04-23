@@ -378,6 +378,69 @@ GitHub Actions runs on every push and PR:
 
 See `.github/workflows/ci.yml`.
 
+> **Important:** CI only checks code quality — it does not deploy the app or touch the database. Pushing to GitHub will never reset or modify your database.
+
+---
+
+## Database Management
+
+The database runs on your machine (or a hosted server) independently of GitHub. Here is what each command does and when to run it:
+
+| Command | What it does | When to run |
+|---|---|---|
+| `pnpm --filter api run db:migrate` | Creates/updates tables from the Prisma schema | When you change `schema.prisma` |
+| `pnpm --filter api run db:seed` | Inserts demo accounts and sample data | Once on a fresh database, or after wiping data |
+| `pnpm --filter api run db:generate` | Regenerates the Prisma client types | After any schema change or fresh `pnpm install` |
+
+The seed is idempotent (safe to run multiple times). It uses `upsert` so it will not duplicate records — it will update existing ones (e.g. resetting passwords on existing accounts).
+
+### If users appear in the wrong organization
+
+This can happen if a Google OAuth login created a new organization before the seed ran. Fix it with:
+
+```bash
+psql postgresql://worksafe:worksafe_dev_secret@localhost:5432/worksafe_db -c "
+UPDATE users
+SET \"organizationId\" = (SELECT \"organizationId\" FROM users WHERE email = 'aryanrajendrasuthar@gmail.com' LIMIT 1)
+WHERE email IN ('worker@gmail.com', 'therapist@gmail.com', 'safety@gmail.com', 'hr@demo.worksafe.com');
+"
+```
+
+---
+
+## Deployment
+
+GitHub stores code only — it has no connection to your local database. To run WorkSafe with a persistent public URL (e.g. for a demo or production), you need to deploy to a hosting platform.
+
+### Recommended stack (all free tiers available)
+
+| Layer | Service | Notes |
+|---|---|---|
+| Frontend | **Vercel** | Connect GitHub repo, auto-deploys on push |
+| Backend API | **Railway** or **Render** | Runs the NestJS server |
+| Database | **Railway PostgreSQL** or **Supabase** | Managed PostgreSQL, persistent |
+
+### Deployment steps (Railway example)
+
+1. Push all code to GitHub
+2. Create a Railway project → add a PostgreSQL plugin → add a new service pointed at your GitHub repo
+3. Set all environment variables from `apps/api/.env.example` in Railway's dashboard
+4. Railway auto-runs `pnpm install && pnpm --filter api run build` on deploy
+5. Run migrations once: Railway → your service → Shell → `pnpm --filter api run db:migrate`
+6. Run seed once: same shell → `pnpm --filter api run db:seed`
+7. Deploy the frontend to Vercel — set `VITE_API_URL` to your Railway service URL
+
+After initial setup, every `git push` redeploys the code automatically. The database is **never reset** by a push — only by manually running `db:migrate` or `db:seed`.
+
+### Local demo (no deployment needed)
+
+For showing the project locally (e.g. to a professor), no deployment is needed. Run the seed once and the data persists on your machine until you drop the database. Just start both servers:
+
+```bash
+pnpm --filter api run dev   # API on :3001
+pnpm --filter web run dev   # Web on :3000
+```
+
 ---
 
 ## What's Not Implemented Yet
