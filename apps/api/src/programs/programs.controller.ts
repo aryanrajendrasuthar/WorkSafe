@@ -5,7 +5,10 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { ProgramsService } from './programs.service';
-import { CreateSessionDto } from './dto/create-session.dto';
+import {
+  CreateSessionDto,
+  CreateSessionFeedbackDto,
+} from './dto/create-session.dto';
 import { AssignProgramDto, CreateProgramDto } from './dto/create-program.dto';
 
 @ApiTags('Programs')
@@ -81,5 +84,21 @@ export class ProgramsController {
     @Param('workerProgramId') workerProgramId: string,
   ) {
     return this.programsService.getSessionHistory(workerProgramId, user.id);
+  }
+
+  @Post(':workerProgramId/sessions/:sessionId/feedback')
+  @ApiOperation({ summary: 'Submit post-session work readiness feedback' })
+  addFeedback(
+    @CurrentUser() user: any,
+    @Param('workerProgramId') workerProgramId: string,
+    @Param('sessionId') sessionId: string,
+    @Body() dto: CreateSessionFeedbackDto,
+  ) {
+    return this.programsService.addSessionFeedback(
+      sessionId,
+      workerProgramId,
+      user.id,
+      dto,
+    );
   }
 }

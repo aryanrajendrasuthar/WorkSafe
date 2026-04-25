@@ -136,7 +136,26 @@ enum NotificationType {
   RISK_THRESHOLD_BREACH
   OSHA_DEADLINE
   STREAK_MILESTONE
+  ACHIEVEMENT_UNLOCKED
   SYSTEM
+}
+
+enum WorkReadiness {
+  FULL_DUTY
+  MODIFIED
+  RECOVERY
+}
+
+enum AchievementType {
+  FIRST_CHECKIN
+  STREAK_7
+  STREAK_30
+  STREAK_100
+  FIRST_SESSION
+  SESSIONS_10
+  SESSIONS_50
+  FIRST_PROGRAM_COMPLETE
+  PAIN_FREE_30
 }
 
 enum RiskEntityType {
@@ -230,6 +249,7 @@ model User {
   refreshTokens       RefreshToken[]
   assignedPrograms    WorkerProgram[]     @relation("AssignedBy")
   passwordResetTokens PasswordResetToken[]
+  achievements        UserAchievement[]
 
   @@map("users")
 }
@@ -295,13 +315,14 @@ model JobProfile {
 // ─── Check-ins ────────────────────────────────────────────────────────────────
 
 model DailyCheckin {
-  id            String       @id @default(cuid())
+  id            String        @id @default(cuid())
   userId        String
-  date          DateTime     @db.Date
-  overallStatus PainSeverity @default(NONE)
+  date          DateTime      @db.Date
+  overallStatus PainSeverity  @default(NONE)
+  workReadiness WorkReadiness @default(FULL_DUTY)
   note          String?
-  completedAt   DateTime     @default(now())
-  createdAt     DateTime     @default(now())
+  completedAt   DateTime      @default(now())
+  createdAt     DateTime      @default(now())
 
   user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   bodyAreas BodyAreaEntry[]
@@ -422,9 +443,44 @@ model SessionLog {
   notes              String?
   createdAt          DateTime @default(now())
 
-  workerProgram WorkerProgram @relation(fields: [workerProgramId], references: [id], onDelete: Cascade)
+  workerProgram  WorkerProgram        @relation(fields: [workerProgramId], references: [id], onDelete: Cascade)
+  exerciseLogs   SessionExerciseLog[]
+  feedback       SessionFeedback?
 
   @@map("session_logs")
+}
+
+model SessionExerciseLog {
+  id             String  @id @default(cuid())
+  sessionLogId   String
+  exerciseId     String
+  exerciseName   String
+  setsCompleted  Int     @default(0)
+  repsCompleted  Int?
+  durationSec    Int?
+  painDuring     Boolean @default(false)
+  skipped        Boolean @default(false)
+  sortOrder      Int
+
+  sessionLog SessionLog @relation(fields: [sessionLogId], references: [id], onDelete: Cascade)
+
+  @@index([sessionLogId])
+  @@map("session_exercise_logs")
+}
+
+model SessionFeedback {
+  id             String   @id @default(cuid())
+  sessionLogId   String   @unique
+  recoveryFeel   String
+  perceivedDiff  Int
+  workReadiness  Int
+  painDuring     Boolean  @default(false)
+  notes          String?
+  createdAt      DateTime @default(now())
+
+  sessionLog SessionLog @relation(fields: [sessionLogId], references: [id], onDelete: Cascade)
+
+  @@map("session_feedbacks")
 }
 
 // ─── Risk Engine ──────────────────────────────────────────────────────────────
@@ -531,6 +587,21 @@ model Notification {
 
   @@index([userId, isRead])
   @@map("notifications")
+}
+
+// ─── Achievements ─────────────────────────────────────────────────────────────
+
+model UserAchievement {
+  id          String          @id @default(cuid())
+  userId      String
+  achievement AchievementType
+  unlockedAt  DateTime        @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievement])
+  @@index([userId])
+  @@map("user_achievements")
 }
 
 // ─── Audit Log ────────────────────────────────────────────────────────────────

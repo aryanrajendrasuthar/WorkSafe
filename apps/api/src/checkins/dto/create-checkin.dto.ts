@@ -9,7 +9,7 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import { BodyPart, PainSeverity } from '@prisma/client';
+import { BodyPart, PainSeverity, WorkReadiness } from '@prisma/client';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class BodyAreaEntryDto {
@@ -43,6 +43,11 @@ export class CreateCheckinDto {
   @ApiProperty({ enum: PainSeverity })
   @IsEnum(PainSeverity)
   overallStatus: PainSeverity;
+
+  @ApiProperty({ enum: WorkReadiness, required: false })
+  @IsOptional()
+  @IsEnum(WorkReadiness)
+  workReadiness?: WorkReadiness;
 
   @ApiProperty({ type: [BodyAreaEntryDto] })
   @IsArray()

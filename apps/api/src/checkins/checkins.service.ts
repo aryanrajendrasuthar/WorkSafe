@@ -1,10 +1,14 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { AchievementsService } from '../achievements/achievements.service';
 import { CreateCheckinDto } from './dto/create-checkin.dto';
 
 @Injectable()
 export class CheckinsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private achievements: AchievementsService,
+  ) {}
 
   async createCheckin(userId: string, dto: CreateCheckinDto) {
     const today = new Date();
@@ -23,6 +27,7 @@ export class CheckinsService {
         userId,
         date: today,
         overallStatus: dto.overallStatus,
+        workReadiness: dto.workReadiness ?? 'FULL_DUTY',
         note: dto.note,
         bodyAreas: {
           create: dto.bodyAreas.map((area) => ({
@@ -37,8 +42,11 @@ export class CheckinsService {
       include: { bodyAreas: true },
     });
 
-    const streak = await this.calculateStreak(userId);
-    return { checkin, streak };
+    const [streak, newAchievements] = await Promise.all([
+      this.calculateStreak(userId),
+      this.achievements.checkAndUnlock(userId),
+    ]);
+    return { checkin, streak, newAchievements };
   }
 
   async getHistory(userId: string, days = 90) {

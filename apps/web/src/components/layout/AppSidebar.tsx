@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Activity, Dumbbell, AlertTriangle, Users, ClipboardList,
   FileBarChart, Bell, Settings, ChevronLeft, ShieldCheck, LogOut,
-  Building2, TrendingUp, UserCheck, X, Menu, Moon, Sun,
+  Building2, TrendingUp, UserCheck, X, Menu, Moon, Sun, Award,
 } from 'lucide-react';
 import { cn, getInitials } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth.store';
@@ -26,6 +26,7 @@ const navByRole: Record<string, NavItem[]> = {
     { label: 'Dashboard', href: '/worker/dashboard', icon: LayoutDashboard },
     { label: 'Daily Check-in', href: '/worker/checkin', icon: Activity },
     { label: 'My Programs', href: '/worker/programs', icon: Dumbbell },
+    { label: 'Milestones', href: '/worker/achievements', icon: Award },
     { label: 'History', href: '/worker/history', icon: TrendingUp },
     { label: 'Notifications', href: '/worker/notifications', icon: Bell },
   ],

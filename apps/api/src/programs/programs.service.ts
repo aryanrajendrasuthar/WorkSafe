@@ -1,11 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateSessionDto } from './dto/create-session.dto';
+import { AchievementsService } from '../achievements/achievements.service';
+import {
+  CreateSessionDto,
+  CreateSessionFeedbackDto,
+} from './dto/create-session.dto';
 import { AssignProgramDto, CreateProgramDto } from './dto/create-program.dto';
 
 @Injectable()
 export class ProgramsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private achievements: AchievementsService,
+  ) {}
 
   async getWorkerPrograms(userId: string) {
     const workerPrograms = await this.prisma.workerProgram.findMany({
@@ -67,12 +74,68 @@ export class ProgramsService {
     });
     if (!workerProgram) throw new NotFoundException('Worker program not found');
 
-    return this.prisma.sessionLog.create({
+    const session = await this.prisma.sessionLog.create({
       data: {
         workerProgramId,
         exercisesCompleted: dto.exercisesCompleted,
         exercisesTotal: dto.exercisesTotal,
         durationMin: dto.durationMin,
+        notes: dto.notes,
+        ...(dto.exerciseLogs?.length
+          ? {
+              exerciseLogs: {
+                create: dto.exerciseLogs.map((el) => ({
+                  exerciseId: el.exerciseId,
+                  exerciseName: el.exerciseName,
+                  setsCompleted: el.setsCompleted,
+                  repsCompleted: el.repsCompleted,
+                  durationSec: el.durationSec,
+                  painDuring: el.painDuring,
+                  skipped: el.skipped,
+                  sortOrder: el.sortOrder,
+                })),
+              },
+            }
+          : {}),
+      },
+      include: { exerciseLogs: true },
+    });
+
+    // Fire achievement check asynchronously — don't block the session log response
+    this.achievements.checkAndUnlock(userId).catch(() => {});
+
+    return session;
+  }
+
+  async addSessionFeedback(
+    sessionLogId: string,
+    workerProgramId: string,
+    userId: string,
+    dto: CreateSessionFeedbackDto,
+  ) {
+    const session = await this.prisma.sessionLog.findFirst({
+      where: { id: sessionLogId, workerProgramId },
+      include: { workerProgram: { select: { userId: true } } },
+    });
+    if (!session || session.workerProgram.userId !== userId) {
+      throw new NotFoundException('Session not found');
+    }
+
+    return this.prisma.sessionFeedback.upsert({
+      where: { sessionLogId },
+      update: {
+        recoveryFeel: dto.recoveryFeel,
+        perceivedDiff: dto.perceivedDiff,
+        workReadiness: dto.workReadiness,
+        painDuring: dto.painDuring,
+        notes: dto.notes,
+      },
+      create: {
+        sessionLogId,
+        recoveryFeel: dto.recoveryFeel,
+        perceivedDiff: dto.perceivedDiff,
+        workReadiness: dto.workReadiness,
+        painDuring: dto.painDuring,
         notes: dto.notes,
       },
     });
@@ -86,6 +149,7 @@ export class ProgramsService {
 
     return this.prisma.sessionLog.findMany({
       where: { workerProgramId },
+      include: { exerciseLogs: true, feedback: true },
       orderBy: { date: 'desc' },
     });
   }

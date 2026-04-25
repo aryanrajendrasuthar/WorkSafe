@@ -26,6 +26,7 @@ const ExercisesPage = lazy(() => import('./pages/worker/Exercises'));
 const ProgramsPage = lazy(() => import('./pages/worker/Programs'));
 const WorkerHistory = lazy(() => import('./pages/worker/History'));
 const WorkerNotifications = lazy(() => import('./pages/worker/Notifications'));
+const WorkerAchievements = lazy(() => import('./pages/worker/Achievements'));
 
 // Therapist pages — lazy loaded
 const TherapistDashboard = lazy(() => import('./pages/therapist/Dashboard'));
@@ -138,6 +139,7 @@ export default function App() {
             <Route path="programs" element={<Suspense fallback={<PageLoader />}><ProgramsPage /></Suspense>} />
             <Route path="history" element={<Suspense fallback={<PageLoader />}><WorkerHistory /></Suspense>} />
             <Route path="notifications" element={<Suspense fallback={<PageLoader />}><WorkerNotifications /></Suspense>} />
+            <Route path="achievements" element={<Suspense fallback={<PageLoader />}><WorkerAchievements /></Suspense>} />
           </Route>
 
           {/* Therapist routes */}
