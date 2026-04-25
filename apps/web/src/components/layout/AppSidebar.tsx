@@ -253,7 +253,7 @@ export function TopBar({ onMobileMenuOpen, collapsed }: { onMobileMenuOpen: () =
   const { data: unreadData } = useQuery({
     queryKey: ['notifications', 'unread'],
     queryFn: () => api.get('/notifications/unread').then((r) => r.data.data),
-    refetchInterval: 30_000,
+    refetchInterval: 120_000,
   });
 
   const unreadCount: number = unreadData?.count ?? 0;

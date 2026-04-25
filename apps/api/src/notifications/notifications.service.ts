@@ -1,10 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationEventService } from './notification-event.service';
+import { PushService } from './push.service';
 
 @Injectable()
 export class NotificationsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private events: NotificationEventService,
+    private push: PushService,
+  ) {}
 
   async getForUser(userId: string, page = 1, limit = 30) {
     const skip = (page - 1) * limit;
@@ -49,7 +55,7 @@ export class NotificationsService {
     message: string;
     metadata?: Record<string, unknown>;
   }) {
-    return this.prisma.notification.create({
+    const notification = await this.prisma.notification.create({
       data: {
         userId: data.userId,
         type: data.type,
@@ -58,6 +64,19 @@ export class NotificationsService {
         data: (data.metadata ?? {}) as any,
       },
     });
+
+    this.events.emit(data.userId, {
+      id: notification.id,
+      type: data.type,
+      title: data.title,
+      message: data.message,
+      data: data.metadata,
+      createdAt: notification.createdAt,
+    });
+
+    this.push.sendToUser(data.userId, data.title, data.message, data.metadata).catch(() => {});
+
+    return notification;
   }
 
   async createForOrg(
@@ -85,6 +104,12 @@ export class NotificationsService {
         data: {},
       })),
     });
+
+    const now = new Date();
+    for (const u of users) {
+      this.events.emit(u.id, { id: `org-${now.getTime()}`, type, title, message, createdAt: now });
+      this.push.sendToUser(u.id, title, message).catch(() => {});
+    }
   }
 
   async delete(id: string, userId: string) {

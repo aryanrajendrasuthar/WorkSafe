@@ -8,6 +8,9 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'service-worker.ts',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
       manifest: {
         name: 'WorkSafe — Occupational Health Platform',
@@ -28,20 +31,8 @@ export default defineConfig({
           { name: 'My Programs', url: '/worker/programs', description: 'View your exercise programs' },
         ],
       },
-      workbox: {
+      injectManifest: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: { cacheName: 'google-fonts-cache', expiration: { maxEntries: 10, maxAgeSeconds: 60 * 60 * 24 * 365 } },
-          },
-          {
-            urlPattern: /\/api\/(exercises|programs\/org)/,
-            handler: 'StaleWhileRevalidate',
-            options: { cacheName: 'api-static-cache', expiration: { maxEntries: 50, maxAgeSeconds: 60 * 5 } },
-          },
-        ],
       },
     }),
   ],
@@ -57,6 +48,13 @@ export default defineConfig({
         target: 'http://localhost:3001',
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/api/, ''),
+        configure: (proxy) => {
+          proxy.on('proxyReq', (_proxyReq, req) => {
+            if (req.url?.includes('/notifications/stream')) {
+              (_proxyReq as any).setHeader('connection', 'keep-alive');
+            }
+          });
+        },
       },
     },
   },

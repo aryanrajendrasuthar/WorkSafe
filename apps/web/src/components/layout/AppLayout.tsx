@@ -4,6 +4,8 @@ import { Home, ClipboardCheck, Dumbbell, Target, Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth.store';
 import { AppSidebar, TopBar } from './AppSidebar';
+import { useNotificationStream } from '@/hooks/useNotificationStream';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 const WORKER_BOTTOM_NAV = [
   { to: '/worker/dashboard', icon: Home, label: 'Home' },
@@ -46,6 +48,9 @@ export function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const user = useAuthStore((s) => s.user);
   const isWorker = user?.role === 'WORKER';
+
+  useNotificationStream();
+  usePushNotifications();
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">

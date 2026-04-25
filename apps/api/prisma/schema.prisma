@@ -250,6 +250,7 @@ model User {
   assignedPrograms    WorkerProgram[]     @relation("AssignedBy")
   passwordResetTokens PasswordResetToken[]
   achievements        UserAchievement[]
+  pushSubscriptions   PushSubscription[]
 
   @@map("users")
 }
@@ -602,6 +603,23 @@ model UserAchievement {
   @@unique([userId, achievement])
   @@index([userId])
   @@map("user_achievements")
+}
+
+// ─── Push Subscriptions ───────────────────────────────────────────────────────
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, endpoint])
+  @@index([userId])
+  @@map("push_subscriptions")
 }
 
 // ─── Audit Log ────────────────────────────────────────────────────────────────

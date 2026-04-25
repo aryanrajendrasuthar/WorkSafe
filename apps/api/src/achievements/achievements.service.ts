@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { AchievementType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 export const ACHIEVEMENT_META: Record<
   AchievementType,
@@ -55,7 +56,10 @@ export const ACHIEVEMENT_META: Record<
 
 @Injectable()
 export class AchievementsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private notifications: NotificationsService,
+  ) {}
 
   async getUserAchievements(userId: string) {
     const unlocked = await this.prisma.userAchievement.findMany({
@@ -143,16 +147,15 @@ export class AchievementsService {
         skipDuplicates: true,
       });
 
-      // Fire in-app notifications for newly unlocked achievements
-      await this.prisma.notification.createMany({
-        data: toUnlock.map((type) => ({
+      for (const type of toUnlock) {
+        await this.notifications.create({
           userId,
-          type: 'ACHIEVEMENT_UNLOCKED' as const,
-          title: `Achievement unlocked: ${ACHIEVEMENT_META[type].title}`,
+          type: 'ACHIEVEMENT_UNLOCKED',
+          title: `${ACHIEVEMENT_META[type].icon} Achievement unlocked: ${ACHIEVEMENT_META[type].title}`,
           message: ACHIEVEMENT_META[type].description,
-          data: { achievementType: type, icon: ACHIEVEMENT_META[type].icon },
-        })),
-      });
+          metadata: { achievementType: type, icon: ACHIEVEMENT_META[type].icon },
+        });
+      }
     }
 
     return toUnlock;

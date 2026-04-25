@@ -67,7 +67,7 @@ export class AuthController {
     @CurrentUser() user: { id: string },
     @Body() body: { refreshToken?: string },
   ) {
-    await this.authService.logout(user.id, body.refreshToken);
+    await this.authService.logout(user.id, body?.refreshToken);
     return { message: 'Logged out successfully' };
   }
 
