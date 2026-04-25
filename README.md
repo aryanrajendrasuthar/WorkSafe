@@ -1,6 +1,6 @@
 # WorkSafe — Occupational Health Platform
 
-Enterprise SaaS platform for musculoskeletal injury prevention and return-to-work management.
+Enterprise SaaS platform for musculoskeletal injury prevention, guided exercise delivery, and return-to-work management.
 
 ---
 
@@ -13,6 +13,7 @@ worksafe/
     api/          NestJS + TypeScript (port 3001)
   packages/
     shared/       Shared TS types and enums
+  docs/           Product documentation
 ```
 
 **Tech stack:**
@@ -65,8 +66,8 @@ brew services start postgresql@16
 psql postgres -c "CREATE USER worksafe WITH PASSWORD 'worksafe_dev_secret' CREATEDB;"
 psql postgres -c "CREATE DATABASE worksafe_db OWNER worksafe;"
 
-# Run migrations
-pnpm --filter api run db:migrate
+# Push schema to database (dev — no migration history required)
+pnpm --filter api run db:push
 
 # Seed demo data
 pnpm --filter api run db:seed
@@ -131,13 +132,7 @@ Access tokens auto-refresh silently in the frontend. When a 401 is received, the
 
 ### Email — not yet implemented
 
-The `SENDGRID_API_KEY` and `EMAIL_FROM` variables are in `.env` but **email sending is not implemented yet**. Invitation links are stored in the database and can be copied manually from the HR Admin → Invites page. No emails are sent currently.
-
-**When you're ready to add email:**
-1. Sign up at [sendgrid.com](https://sendgrid.com) (free tier: 100 emails/day)
-2. Verify a sender email address
-3. Create an API key and add it to `.env`
-4. An `EmailService` class needs to be built in `apps/api/src/notifications/`
+The `SENDGRID_API_KEY` and `EMAIL_FROM` variables are in `.env` but **email sending is not implemented yet**. Invitation links are stored in the database and can be copied manually from the HR Admin → Invites page.
 
 ### Stripe — not integrated
 
@@ -166,15 +161,21 @@ The seed is idempotent — safe to run multiple times.
 ## Features by Role
 
 ### Worker
-- **Daily check-in** — 60-second mobile-first body map flow with per-area intensity sliders
-- **Pain history** — 30-day trend chart by body region
-- **Exercise programs** — sequential exercise cards, session tracking, completion rings
-- **Streak tracking** — achievement badges at 7, 30, and 100-day streaks
+- **Work Readiness Assessment** — branching check-in step before the body map: Full Duty / Modified Capacity / Recovery Mode. Selection is persisted and informs the risk model and clinician view
+- **Daily check-in** — 4-step mobile-first flow: work readiness → body map → per-area intensity sliders → overall status + notes
+- **Guided session player** — step-by-step exercise execution with:
+  - Countdown timer for timed/hold exercises (start, pause, reset) with auto-advance on completion
+  - Circular rest timer between exercises with conic-gradient ring and skip option
+  - Set-by-set progression with "Set 2/3" badge
+  - Per-exercise pain flag captured per set
+- **Post-session feedback** — structured survey after every session: recovery feel (better/same/harder), perceived difficulty (1–5), work readiness rating (1–5), pain during session flag, optional clinician notes
+- **Milestones** — 9 occupational health achievement milestones unlocked automatically: first check-in, 7/30/100-day streaks, 1/10/50 sessions, first program completion, 30-day pain-free streak. Unlock notifications fire in-app
+- **Pain history** — 30-day trend chart by body region + 90-day heatmap
 - **Notifications** — in-app alert center with unread count
 
 ### Therapist
 - **Worker roster** — risk-sorted list with escalation badges and trend indicators
-- **Worker detail** — multi-line pain trend chart, RTW milestones, check-in log table
+- **Worker detail** — multi-line pain trend chart, RTW milestones, check-in log, session feedback history
 - **Program builder** — create/edit programs with drag-ordered exercises, assign to workers
 - **Incident management** — log incidents, track RTW milestones (Light → Modified → Full Duty)
 - **Escalation alerts** — workers with rising pain intensity flagged automatically
@@ -224,9 +225,27 @@ Org/dept alert thresholds:
 
 ---
 
+## Achievement Milestones
+
+Achievements are checked and unlocked automatically after every check-in and every session log. Newly unlocked milestones fire an `ACHIEVEMENT_UNLOCKED` in-app notification.
+
+| Achievement | Condition |
+|---|---|
+| First Step 🌟 | Complete your first check-in |
+| Week Warrior 🔥 | 7-day check-in streak |
+| Monthly Momentum 🏅 | 30-day check-in streak |
+| Century Club 💯 | 100-day check-in streak |
+| In Motion 💪 | Complete your first session |
+| Getting Strong ⚡ | Complete 10 sessions |
+| Committed 🎯 | Complete 50 sessions |
+| Program Graduate 🏆 | Complete all sessions in an assigned program |
+| Resilient 🛡️ | 30 consecutive check-ins with no severe pain |
+
+---
+
 ## API Reference
 
-Base URL: `http://localhost:3001`  
+Base URL: `http://localhost:3001`
 Full Swagger docs: http://localhost:3001/api/docs
 
 **Auth**
@@ -244,12 +263,20 @@ POST /auth/invite/accept     Register via invite token
 
 **Worker**
 ```
-POST /workers/onboarding     Complete worker onboarding
-POST /checkins               Submit daily check-in
-GET  /checkins/history       Get check-in history
-GET  /exercises              Browse exercise library
-GET  /programs               Get programs assigned to me
-POST /programs/:id/sessions  Log a session completion
+POST /workers/onboarding                                     Complete worker onboarding
+POST /checkins                                               Submit daily check-in (includes workReadiness field)
+GET  /checkins/today                                         Get today's check-in
+GET  /checkins/history                                       Get check-in history (90 days)
+GET  /checkins/trend                                         Pain trend data (30 days)
+GET  /exercises                                              Browse exercise library
+GET  /programs/my                                            Get programs assigned to me
+POST /programs/:workerProgramId/sessions                     Log a session (includes per-exercise logs)
+POST /programs/:workerProgramId/sessions/:sessionId/feedback Submit post-session work readiness feedback
+```
+
+**Achievements**
+```
+GET  /achievements           All 9 milestones with unlock status and dates for current user
 ```
 
 **Therapist**
@@ -302,14 +329,17 @@ GET  /hr/audit-logs             Recent audit log entries
 ## Database Schema Highlights
 
 - **User + JobProfile** — role-based access, department assignment, physical demand level
-- **DailyCheckin + BodyAreaEntry** — daily pain capture, body part + intensity + severity
+- **DailyCheckin + BodyAreaEntry** — daily pain capture with `workReadiness` (FULL_DUTY / MODIFIED / RECOVERY) and body part + intensity + severity per area
 - **Exercise + Program + ProgramExercise** — library → ordered program → worker assignment
 - **WorkerProgram + SessionLog** — per-worker progress tracking
+- **SessionExerciseLog** — immutable per-exercise snapshot for every session (sets completed, reps, duration, pain flag, skipped flag)
+- **SessionFeedback** — post-session work readiness record (recovery feel, perceived difficulty 1–5, work readiness 1–5, pain during, notes)
+- **UserAchievement** — which of the 9 milestones each worker has unlocked and when
 - **Incident + RTWMilestone** — injury lifecycle with milestone sign-offs
 - **RiskScore** — computed scores persisted with contributing factors JSON
 - **Alert** — threshold-breach notifications with acknowledgment workflow
 - **AuditLog** — full API mutation history (action, resource, user, IP)
-- **Notification** — in-app notification model (email sending not yet implemented)
+- **Notification** — in-app notification model with `ACHIEVEMENT_UNLOCKED` type
 - **InviteToken** — invite-based registration links with expiry and role assignment
 
 ---
@@ -319,10 +349,11 @@ GET  /hr/audit-logs             Recent audit log entries
 ```
 apps/api/src/
   auth/           JWT, Passport, Google OAuth, invite tokens
-  workers/        Worker onboarding
-  checkins/       Daily check-in submission + history
+  workers/        Worker onboarding and stats
+  checkins/       Daily check-in submission + history (workReadiness persisted)
   exercises/      Exercise library
-  programs/       Program CRUD + session logging
+  programs/       Program CRUD, session logging, per-exercise logs, session feedback
+  achievements/   Achievement check/unlock service, GET /achievements endpoint
   therapist/      Therapist-scoped worker data + escalation detection
   incidents/      Incident logging + RTW milestones + OSHA reports
   risk/           Risk score engine + alerts
@@ -333,25 +364,32 @@ apps/api/src/
 
 apps/web/src/
   pages/
-    Landing.tsx               Public marketing page
-    auth/                     Login, Register, InviteAccept, GoogleCallback
-    Terms.tsx, Privacy.tsx    Legal pages
-    worker/                   Dashboard, Checkin, Exercises, Programs, Onboarding
-    therapist/                Dashboard, Workers, WorkerDetail, Programs, ProgramBuilder, Incidents, IncidentDetail
-    safety-manager/           Dashboard, Departments, DepartmentDetail, Alerts, OshaReports
-    hr-admin/                 Dashboard, Employees, DepartmentsPage, Invites
-    company-admin/            Dashboard, Users (role management), Settings, AuditLog, Billing
+    Landing.tsx                    Public marketing page
+    auth/                          Login, Register, InviteAccept, GoogleCallback
+    Terms.tsx, Privacy.tsx         Legal pages
+    worker/
+      Dashboard.tsx                Stats, pain trend chart, active programs
+      Checkin.tsx                  4-step flow: work readiness → body map → details → status
+      Programs.tsx                 Program cards + guided session player with timers + feedback form
+      Achievements.tsx             Milestones page with progress bar and unlock grid
+      Exercises.tsx                Exercise library browser
+      History.tsx                  Check-in history with heatmap
+      Notifications.tsx            In-app notification center
+    therapist/                     Dashboard, Workers, WorkerDetail, Programs, ProgramBuilder, Incidents, IncidentDetail, Escalations
+    safety-manager/                Dashboard, Departments, DepartmentDetail, Alerts, OshaReports
+    hr-admin/                      Dashboard, Employees, DepartmentsPage, Invites
+    company-admin/                 Dashboard, Users, Settings, AuditLog, Billing
   components/
-    layout/                   AppLayout, AppSidebar, TopBar
-    ui/                       shadcn/ui components
-    BodyMap.tsx               Interactive SVG body map
-    CheckinHeatmap.tsx        GitHub-style contribution heatmap
+    layout/                        AppLayout, AppSidebar (Milestones nav item added), TopBar
+    ui/                            shadcn/ui components
+    BodyMap.tsx                    Interactive SVG body map
+    CheckinHeatmap.tsx             GitHub-style contribution heatmap
   store/
-    auth.store.ts             Zustand auth state + token management
-    theme.store.ts            Dark mode toggle with persistence
+    auth.store.ts                  Zustand auth state + token management
+    theme.store.ts                 Dark mode toggle with persistence
   lib/
-    api.ts                    Axios instance + 401 refresh interceptor
-    queryClient.ts            TanStack Query configuration
+    api.ts                         Axios instance + 401 refresh interceptor
+    queryClient.ts                 TanStack Query configuration
 ```
 
 ---
@@ -367,6 +405,7 @@ apps/web/src/
 | `v0.5.0-sprint5` | Enterprise | RTW workflow, OSHA reports, HR admin, audit logs |
 | `v1.0.0` | Polish | Dark mode, PWA, code splitting, predictive risk, DB indexes, accessibility |
 | post-v1.0 | Fixes & Hardening | Role management UI, primary admin lock, CI lint fixes, credential updates |
+| post-v1.0 | Guided Sessions & Milestones | Work readiness assessment, guided session player with timers, post-session feedback, 9-tier achievement system, session exercise logs, per-exercise pain tracking |
 
 ---
 
@@ -384,15 +423,16 @@ See `.github/workflows/ci.yml`.
 
 ## Database Management
 
-The database runs on your machine (or a hosted server) independently of GitHub. Here is what each command does and when to run it:
+The database runs on your machine (or a hosted server) independently of GitHub.
 
 | Command | What it does | When to run |
 |---|---|---|
-| `pnpm --filter api run db:migrate` | Creates/updates tables from the Prisma schema | When you change `schema.prisma` |
+| `pnpm --filter api run db:push` | Pushes schema changes directly to the dev database | When you change `schema.prisma` in development |
+| `pnpm --filter api run db:migrate` | Creates a versioned migration file and applies it | When preparing a production-ready migration |
 | `pnpm --filter api run db:seed` | Inserts demo accounts and sample data | Once on a fresh database, or after wiping data |
 | `pnpm --filter api run db:generate` | Regenerates the Prisma client types | After any schema change or fresh `pnpm install` |
 
-The seed is idempotent (safe to run multiple times). It uses `upsert` so it will not duplicate records — it will update existing ones (e.g. resetting passwords on existing accounts).
+The seed is idempotent (safe to run multiple times). It uses `upsert` so it will not duplicate records.
 
 ### If users appear in the wrong organization
 
@@ -410,7 +450,7 @@ WHERE email IN ('worker@gmail.com', 'therapist@gmail.com', 'safety@gmail.com', '
 
 ## Deployment
 
-GitHub stores code only — it has no connection to your local database. To run WorkSafe with a persistent public URL (e.g. for a demo or production), you need to deploy to a hosting platform.
+GitHub stores code only — it has no connection to your local database. To run WorkSafe with a persistent public URL, deploy to a hosting platform.
 
 ### Recommended stack (all free tiers available)
 
@@ -430,11 +470,11 @@ GitHub stores code only — it has no connection to your local database. To run 
 6. Run seed once: same shell → `pnpm --filter api run db:seed`
 7. Deploy the frontend to Vercel — set `VITE_API_URL` to your Railway service URL
 
-After initial setup, every `git push` redeploys the code automatically. The database is **never reset** by a push — only by manually running `db:migrate` or `db:seed`.
+After initial setup, every `git push` redeploys the code automatically. The database is **never reset** by a push.
 
 ### Local demo (no deployment needed)
 
-For showing the project locally (e.g. to a professor), no deployment is needed. Run the seed once and the data persists on your machine until you drop the database. Just start both servers:
+For showing the project locally (e.g. to a professor or investor), no deployment is needed. Run the seed once and the data persists on your machine until you drop the database:
 
 ```bash
 pnpm --filter api run dev   # API on :3001
@@ -447,9 +487,11 @@ pnpm --filter web run dev   # Web on :3000
 
 | Feature | Status | Notes |
 |---|---|---|
-| Email sending | Not built | `SENDGRID_API_KEY` is wired in env, `Notification` model exists in DB, but no `EmailService`. Invite links are copy-paste only. |
+| Email sending | Not built | `SENDGRID_API_KEY` is wired in env, `Notification` model exists, but no `EmailService`. Invite links are copy-paste only. |
 | Stripe billing | Not integrated | UI exists, payment processing not wired up |
 | Push notifications | Not built | `NotificationChannel.PUSH` enum exists but no service worker push configured |
-| MFA (TOTP) | Not built | `isMfaEnabled` / `mfaSecret` columns exist in `User` table |
+| MFA (TOTP) | Not built | `isMfaEnabled` / `mfaSecret` columns exist in `User` table, no setup/verify endpoints yet |
 | SAML SSO | Not built | Planned for enterprise tier |
-| Redis / BullMQ queues | Not running | Risk score and notification jobs planned but not scheduled |
+| Redis / BullMQ queues | Not running | Notification reminder jobs and risk score scheduling planned but not wired |
+| Rep counter (live tap) | Not built | Session player shows target reps statically; no tap-per-rep counter UI yet |
+| Exercise timer ring | Not built | Hold timer shows countdown number; circular conic ring (like rest timer) not added to exercise phase yet |
