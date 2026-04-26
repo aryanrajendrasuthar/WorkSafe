@@ -1,5 +1,8 @@
 # WorkSafe — Occupational Health Platform
 
+**Copyright (c) 2026 Aryan Rajendra Suthar. All Rights Reserved.**
+*Proprietary and confidential. See [LICENSE](LICENSE) and [CONFIDENTIALITY.md](CONFIDENTIALITY.md).*
+
 Enterprise SaaS platform for musculoskeletal injury prevention, guided exercise delivery, and return-to-work management.
 
 ---
@@ -495,3 +498,15 @@ pnpm --filter web run dev   # Web on :3000
 | Redis / BullMQ queues | Not running | Notification reminder jobs and risk score scheduling planned but not wired |
 | Rep counter (live tap) | Not built | Session player shows target reps statically; no tap-per-rep counter UI yet |
 | Exercise timer ring | Not built | Hold timer shows countdown number; circular conic ring (like rest timer) not added to exercise phase yet |
+
+---
+
+## Provenance
+
+Originally conceived, designed, and implemented by **Aryan Rajendra Suthar**.
+
+- First commit: `9fc52292` — 2026-04-21 14:04 PDT
+- Sole author of all 18 commits (`aryanrajendrasuthar@gmail.com`)
+- See [AUTHORS.md](AUTHORS.md), [ORIGIN_PROVENANCE.md](ORIGIN_PROVENANCE.md), and [docs/CREATION_TIMELINE.md](docs/CREATION_TIMELINE.md) for full provenance record.
+
+Copyright (c) 2026 Aryan Rajendra Suthar. All Rights Reserved.

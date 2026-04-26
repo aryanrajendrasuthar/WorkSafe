@@ -1,0 +1,62 @@
+PROPRIETARY SOFTWARE LICENSE
+
+Copyright (c) 2026 Aryan Rajendra Suthar. All Rights Reserved.
+
+OWNERSHIP
+---------
+This software, WorkSafe — Occupational Health Platform (the "Software"), and all
+associated source code, documentation, design assets, data models, algorithms,
+business logic, and intellectual property contained herein are the exclusive
+property of Aryan Rajendra Suthar ("Owner"). The Owner is the sole creator,
+author, and rightful owner of all original work in this repository.
+
+RESTRICTIONS
+------------
+No part of this Software may be:
+
+  1. Copied, reproduced, or duplicated in whole or in part;
+  2. Distributed, published, or made publicly available;
+  3. Modified, adapted, translated, or used to create derivative works;
+  4. Sublicensed, sold, rented, leased, or otherwise transferred;
+  5. Used for commercial purposes without prior written consent of the Owner;
+  6. Reverse-engineered, decompiled, or disassembled;
+
+without the explicit prior written permission of Aryan Rajendra Suthar.
+
+PERMITTED USE
+-------------
+Access to this repository is granted solely for:
+
+  - Academic evaluation and review by authorized faculty or reviewers;
+  - Personal portfolio demonstration by the Owner;
+  - Private development and testing by the Owner.
+
+Any other use requires explicit written authorization from the Owner.
+
+CONFIDENTIALITY
+---------------
+This Software contains proprietary and confidential information. Unauthorized
+disclosure of this Software or its contents to any third party is strictly
+prohibited.
+
+NO WARRANTY
+-----------
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT.
+
+GOVERNING LAW
+-------------
+This license shall be governed by the laws of the State of Arizona, United
+States of America.
+
+CONTACT
+-------
+For licensing inquiries or authorized use requests, contact:
+
+  Aryan Rajendra Suthar
+  Email: aryanrajendrasuthar@gmail.com
+
+---
+WorkSafe is an original work. First committed to version control: 2026-04-21.
+Sole Author: Aryan Rajendra Suthar.

@@ -1,0 +1,67 @@
+================================================================================
+WORKSAFE — OCCUPATIONAL HEALTH PLATFORM
+NOTICE FILE
+================================================================================
+
+Copyright (c) 2026 Aryan Rajendra Suthar. All Rights Reserved.
+
+--------------------------------------------------------------------------------
+OWNERSHIP DECLARATION
+--------------------------------------------------------------------------------
+
+  Software Name:     WorkSafe — Occupational Health Platform
+  Sole Creator:      Aryan Rajendra Suthar
+  Email:             aryanrajendrasuthar@gmail.com
+  Original Creation: April 2026
+  First Commit:      2026-04-21 (commit 9fc52292)
+
+This software was conceived, designed, architected, and implemented in its
+entirety by Aryan Rajendra Suthar. No other author, contributor, or organization
+holds authorship or ownership rights over this original work.
+
+--------------------------------------------------------------------------------
+THIRD-PARTY OPEN SOURCE COMPONENTS
+--------------------------------------------------------------------------------
+
+This software is built using open-source frameworks and libraries. Their use
+does not affect ownership of the original application code, business logic,
+data models, UI/UX design, or architecture decisions contained herein.
+
+Key open-source dependencies (see package.json for full list):
+
+  Framework/Runtime:
+    - Node.js                  (MIT License)
+    - React                    (MIT License)
+    - NestJS                   (MIT License)
+    - TypeScript               (Apache 2.0)
+    - Vite                     (MIT License)
+
+  UI / Frontend:
+    - Tailwind CSS             (MIT License)
+    - shadcn/ui                (MIT License)
+    - Framer Motion            (MIT License)
+    - Recharts                 (MIT License)
+    - Radix UI                 (MIT License)
+
+  Backend / Data:
+    - Prisma                   (Apache 2.0)
+    - Passport.js              (MIT License)
+    - bcryptjs                 (MIT License)
+    - jsonwebtoken             (MIT License)
+
+  State / Data Fetching:
+    - Zustand                  (MIT License)
+    - TanStack Query           (MIT License)
+
+The original application logic, product design, system architecture, and all
+custom code in this repository remain the exclusive intellectual property of
+Aryan Rajendra Suthar.
+
+--------------------------------------------------------------------------------
+CONFIDENTIALITY
+--------------------------------------------------------------------------------
+
+This software is proprietary and confidential. Unauthorized use, reproduction,
+distribution, or disclosure is strictly prohibited. See LICENSE for full terms.
+
+================================================================================
