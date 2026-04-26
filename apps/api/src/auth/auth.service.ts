@@ -8,7 +8,10 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
+import { EmailService } from '../email/email.service';
 import * as bcrypt from 'bcrypt';
+import * as speakeasy from 'speakeasy';
+import * as QRCode from 'qrcode';
 import { randomBytes } from 'crypto';
 import { addDays } from 'date-fns';
 import { Role, User } from '@prisma/client';
@@ -27,6 +30,7 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private config: ConfigService,
+    private email: EmailService,
   ) {}
 
   async validateUser(
@@ -76,10 +80,14 @@ export class AuthService {
   }
 
   async login(user: SafeUser) {
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: { lastLoginAt: new Date() },
-    });
+    await this.prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
+
+    // Check if user has MFA enabled
+    const fullUser = await this.prisma.user.findUnique({ where: { id: user.id }, select: { isMfaEnabled: true } });
+    if (fullUser?.isMfaEnabled) {
+      return { mfaRequired: true, challengeToken: this.generateMfaChallengeToken(user.id) };
+    }
+
     return this.generateAuthResponse(user);
   }
 
@@ -226,15 +234,15 @@ export class AuthService {
 
   async createInvite(dto: CreateInviteDto, organizationId: string) {
     const token = randomBytes(32).toString('hex');
-    const invite = await this.prisma.inviteToken.create({
-      data: {
-        email: dto.email,
-        role: dto.role,
-        organizationId,
-        token,
-        expiresAt: addDays(new Date(), 7),
-      },
-    });
+    const [invite, org] = await Promise.all([
+      this.prisma.inviteToken.create({
+        data: { email: dto.email, role: dto.role, organizationId, token, expiresAt: addDays(new Date(), 7) },
+      }),
+      this.prisma.organization.findUnique({ where: { id: organizationId }, select: { name: true } }),
+    ]);
+    const webUrl = this.config.get('WEB_URL', 'http://localhost:3000');
+    const inviteUrl = `${webUrl}/invite/${token}`;
+    this.email.sendInvite(dto.email, org?.name ?? 'WorkSafe', dto.role, inviteUrl).catch(() => {});
     return invite;
   }
 
@@ -278,13 +286,9 @@ export class AuthService {
     const webUrl = this.config.get('WEB_URL', 'http://localhost:3000');
     const resetUrl = `${webUrl}/reset-password?token=${token}`;
 
-    // Log the reset URL (in production this would be sent via email)
-    console.log(`[PASSWORD RESET] ${user.email} → ${resetUrl}`);
+    await this.email.sendPasswordReset(user.email, user.firstName, resetUrl);
 
-    return {
-      message: 'If that email exists, a reset link has been sent.',
-      resetUrl,
-    };
+    return { message: 'If that email exists, a reset link has been sent.' };
   }
 
   async resetPassword(token: string, newPassword: string) {
@@ -339,6 +343,73 @@ export class AuthService {
     await this.prisma.refreshToken.deleteMany({ where: { userId } });
 
     return { message: 'Password changed successfully. Please log in again.' };
+  }
+
+  // ─── MFA ──────────────────────────────────────────────────────────────────
+
+  async setupMfa(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { email: true, firstName: true } });
+    if (!user) throw new NotFoundException('User not found');
+
+    const secret = speakeasy.generateSecret({ name: `WorkSafe (${user.email})`, issuer: 'WorkSafe', length: 20 });
+
+    // Store temp secret (not yet confirmed)
+    await this.prisma.user.update({ where: { id: userId }, data: { mfaSecret: secret.base32 } });
+
+    const qrCodeDataUrl = await QRCode.toDataURL(secret.otpauth_url!);
+    return { secret: secret.base32, qrCode: qrCodeDataUrl };
+  }
+
+  async verifyMfaSetup(userId: string, token: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { mfaSecret: true } });
+    if (!user?.mfaSecret) throw new BadRequestException('MFA setup not started');
+
+    const valid = speakeasy.totp.verify({ secret: user.mfaSecret, encoding: 'base32', token, window: 1 });
+    if (!valid) throw new UnauthorizedException('Invalid verification code');
+
+    await this.prisma.user.update({ where: { id: userId }, data: { isMfaEnabled: true } });
+    return { message: 'Two-factor authentication enabled' };
+  }
+
+  async disableMfa(userId: string, token: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { mfaSecret: true, isMfaEnabled: true } });
+    if (!user?.isMfaEnabled || !user.mfaSecret) throw new BadRequestException('MFA is not enabled');
+
+    const valid = speakeasy.totp.verify({ secret: user.mfaSecret, encoding: 'base32', token, window: 1 });
+    if (!valid) throw new UnauthorizedException('Invalid verification code');
+
+    await this.prisma.user.update({ where: { id: userId }, data: { isMfaEnabled: false, mfaSecret: null } });
+    return { message: 'Two-factor authentication disabled' };
+  }
+
+  async verifyMfaChallenge(challengeToken: string, totpCode: string) {
+    let payload: { sub: string; mfaChallenge: boolean };
+    try {
+      payload = this.jwtService.verify(challengeToken, {
+        secret: this.config.get<string>('JWT_SECRET'),
+      });
+    } catch {
+      throw new UnauthorizedException('Invalid or expired challenge token');
+    }
+
+    if (!payload.mfaChallenge) throw new UnauthorizedException('Invalid challenge token');
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: { id: true, mfaSecret: true, isMfaEnabled: true },
+    });
+
+    if (!user?.isMfaEnabled || !user.mfaSecret) throw new UnauthorizedException('MFA not configured');
+
+    const valid = speakeasy.totp.verify({ secret: user.mfaSecret, encoding: 'base32', token: totpCode, window: 1 });
+    if (!valid) throw new UnauthorizedException('Invalid verification code');
+
+    const fullUser = await this.prisma.user.findUnique({ where: { id: user.id } });
+    return this.generateAuthResponse(fullUser!);
+  }
+
+  private generateMfaChallengeToken(userId: string): string {
+    return this.jwtService.sign({ sub: userId, mfaChallenge: true }, { expiresIn: '5m' });
   }
 
   private async generateAuthResponse(user: SafeUser | User) {

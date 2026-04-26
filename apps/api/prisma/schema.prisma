@@ -187,6 +187,10 @@ model Organization {
   maxWorkers       Int              @default(50)
   isActive         Boolean          @default(true)
   settings         Json             @default("{}")
+  samlEnabled      Boolean          @default(false)
+  samlEntryPoint   String?
+  samlCert         String?
+  samlIssuer       String?
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 

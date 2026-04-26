@@ -534,15 +534,56 @@ function SessionRunner({ wp, onClose }: { wp: WorkerProgram; onClose: () => void
         >
           <Card>
             <CardContent className="p-5 space-y-4">
-              {/* Visual placeholder */}
-              <div className="w-full h-36 bg-gradient-to-br from-brand-50 to-brand-100 dark:from-brand-900/20 dark:to-brand-800/20 rounded-xl flex items-center justify-center">
-                <motion.div
-                  animate={{ scale: [1, 1.05, 1] }}
-                  transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
-                >
-                  <Target className="w-12 h-12 text-brand-300" />
-                </motion.div>
-              </div>
+              {/* Exercise visual — draining timer or rep counter */}
+              {isTimed ? (
+                <div className="relative w-full overflow-hidden rounded-2xl bg-gradient-to-br from-brand-700 via-brand-600 to-indigo-700 p-6 text-center select-none">
+                  {/* Draining white overlay — shrinks left as time elapses */}
+                  <div
+                    className="absolute inset-0 bg-white/[0.08] transition-transform duration-1000 ease-linear"
+                    style={{ transformOrigin: 'left', transform: `scaleX(${holdSec > 0 ? exerciseTimer.timeLeft / holdSec : 0})` }}
+                  />
+                  <div className="relative z-10 space-y-1">
+                    <p className="text-brand-200 text-[10px] font-bold uppercase tracking-[0.2em]">
+                      {exerciseTimer.running ? 'Hold position' : exerciseTimer.timeLeft === 0 ? 'Complete!' : 'Ready to start'}
+                    </p>
+                    <motion.p
+                      key={exerciseTimer.timeLeft}
+                      initial={{ scale: 1.2, opacity: 0.6 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.2 }}
+                      className="text-7xl font-black text-white tabular-nums leading-none"
+                    >
+                      {exerciseTimer.timeLeft}
+                    </motion.p>
+                    <p className="text-brand-300/70 text-xs">sec</p>
+                    {/* Tick-mark progress */}
+                    <div className="flex gap-0.5 mt-3 px-2">
+                      {Array.from({ length: Math.min(holdSec, 30) }).map((_, i) => {
+                        const totalTicks = Math.min(holdSec, 30);
+                        const remainingTicks = Math.round((exerciseTimer.timeLeft / holdSec) * totalTicks);
+                        return (
+                          <div
+                            key={i}
+                            className={cn('flex-1 h-1.5 rounded-full transition-colors duration-700', i < remainingTicks ? 'bg-white/80' : 'bg-white/15')}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="relative w-full rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 p-6 text-center select-none">
+                  <p className="text-slate-400 text-[10px] font-bold uppercase tracking-[0.2em] mb-1">Reps to complete</p>
+                  <p className="text-7xl font-black text-white tabular-nums leading-none">{current.reps}</p>
+                  {current.reps && current.reps <= 24 && (
+                    <div className="flex justify-center gap-1.5 mt-3 flex-wrap max-w-[200px] mx-auto">
+                      {Array.from({ length: current.reps }).map((_, i) => (
+                        <div key={i} className="w-2.5 h-2.5 rounded-full bg-brand-400/60 border border-brand-300/30" />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Name + set badge */}
               <div className="flex items-start justify-between gap-2">
@@ -560,24 +601,14 @@ function SessionRunner({ wp, onClose }: { wp: WorkerProgram; onClose: () => void
               </div>
 
               {/* Metrics row */}
-              <div className="flex gap-2">
-                {current.reps && (
-                  <div className="flex-1 bg-gray-50 dark:bg-gray-800 rounded-xl p-3 text-center">
-                    <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{current.reps}</div>
-                    <div className="text-xs text-gray-500">reps</div>
-                  </div>
-                )}
-                {isTimed && (
-                  <div className="flex-1 bg-brand-50 dark:bg-brand-900/20 rounded-xl p-3 text-center">
-                    <div className="text-2xl font-bold text-brand-600">
-                      {exerciseTimer.timeLeft}s
-                    </div>
-                    <div className="text-xs text-gray-500">hold</div>
-                  </div>
-                )}
-                <div className="flex-1 bg-gray-50 dark:bg-gray-800 rounded-xl p-3 text-center">
-                  <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{restSec}s</div>
-                  <div className="text-xs text-gray-500">rest</div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 text-center">
+                  <div className="text-xl font-bold text-gray-900 dark:text-gray-100">{totalSets}</div>
+                  <div className="text-xs text-gray-500">sets</div>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-800 rounded-xl p-3 text-center">
+                  <div className="text-xl font-bold text-gray-900 dark:text-gray-100">{restSec}s</div>
+                  <div className="text-xs text-gray-500">rest after</div>
                 </div>
               </div>
 

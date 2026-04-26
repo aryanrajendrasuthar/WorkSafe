@@ -7,6 +7,8 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
+import { SamlStrategy } from './strategies/saml.strategy';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
@@ -19,8 +21,9 @@ import { GoogleStrategy } from './strategies/google.strategy';
       }),
       inject: [ConfigService],
     }),
+    EmailModule,
   ],
-  providers: [AuthService, JwtStrategy, LocalStrategy, GoogleStrategy],
+  providers: [AuthService, JwtStrategy, LocalStrategy, GoogleStrategy, SamlStrategy],
   controllers: [AuthController],
   exports: [AuthService, JwtModule],
 })

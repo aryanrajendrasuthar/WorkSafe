@@ -105,10 +105,11 @@ export class AuthController {
 
     try {
       const result = await this.authService.login(req.user);
-      const params = new URLSearchParams({
-        accessToken: result.tokens.accessToken,
-        refreshToken: result.tokens.refreshToken,
-      });
+      if ('mfaRequired' in result && result.mfaRequired) {
+        return doRedirect(`${webUrl}/login?mfaRequired=true&challengeToken=${result.challengeToken}`);
+      }
+      const r = result as { tokens: { accessToken: string; refreshToken: string } };
+      const params = new URLSearchParams({ accessToken: r.tokens.accessToken, refreshToken: r.tokens.refreshToken });
       return doRedirect(`${webUrl}/auth/google/callback?${params.toString()}`);
     } catch (_err) {
       return doRedirect(`${webUrl}/login?error=google_failed`);
@@ -162,10 +163,79 @@ export class AuthController {
     @CurrentUser() user: { id: string },
     @Body() body: { currentPassword: string; newPassword: string },
   ) {
-    return this.authService.changePassword(
-      user.id,
-      body.currentPassword,
-      body.newPassword,
-    );
+    return this.authService.changePassword(user.id, body.currentPassword, body.newPassword);
+  }
+
+  // ─── MFA ──────────────────────────────────────────────────────────────────
+
+  @Post('mfa/setup')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Generate MFA secret and QR code' })
+  async mfaSetup(@CurrentUser() user: { id: string }) {
+    return this.authService.setupMfa(user.id);
+  }
+
+  @Post('mfa/verify-setup')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Confirm MFA setup with a TOTP code' })
+  async mfaVerifySetup(
+    @CurrentUser() user: { id: string },
+    @Body() body: { token: string },
+  ) {
+    return this.authService.verifyMfaSetup(user.id, body.token);
+  }
+
+  @Post('mfa/disable')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Disable MFA (requires valid TOTP code)' })
+  async mfaDisable(
+    @CurrentUser() user: { id: string },
+    @Body() body: { token: string },
+  ) {
+    return this.authService.disableMfa(user.id, body.token);
+  }
+
+  @Post('mfa/verify')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Complete MFA login challenge' })
+  async mfaVerify(@Body() body: { challengeToken: string; token: string }) {
+    return this.authService.verifyMfaChallenge(body.challengeToken, body.token);
+  }
+
+  // ─── SAML SSO ─────────────────────────────────────────────────────────────
+
+  @Get('saml')
+  @UseGuards(AuthGuard('saml'))
+  @ApiOperation({ summary: 'Initiate SAML SSO login' })
+  async samlAuth() {
+    // Passport redirects to IdP
+  }
+
+  @Post('saml/callback')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard('saml'))
+  @ApiOperation({ summary: 'SAML SSO callback' })
+  async samlCallback(
+    @Request() req: { user: Parameters<AuthService['login']>[0] | null },
+    @Res() res: Response,
+  ) {
+    const webUrl = process.env.WEB_URL || 'http://localhost:3000';
+    if (!req.user) return res.redirect(`${webUrl}/login?error=sso_failed`);
+    try {
+      const result = await this.authService.login(req.user);
+      if ('mfaRequired' in result && result.mfaRequired) {
+        return res.redirect(`${webUrl}/login?mfaRequired=true&challengeToken=${result.challengeToken}`);
+      }
+      const r = result as { tokens: { accessToken: string; refreshToken: string } };
+      const params = new URLSearchParams({ accessToken: r.tokens.accessToken, refreshToken: r.tokens.refreshToken });
+      return res.redirect(`${webUrl}/auth/google/callback?${params}`);
+    } catch {
+      return res.redirect(`${webUrl}/login?error=sso_failed`);
+    }
   }
 }

@@ -16,6 +16,8 @@ import { RiskModule } from './risk/risk.module';
 import { HrModule } from './hr/hr.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { AchievementsModule } from './achievements/achievements.module';
+import { EmailModule } from './email/email.module';
+import { RemindersModule } from './reminders/reminders.module';
 
 @Module({
   imports: [
@@ -34,6 +36,8 @@ import { AchievementsModule } from './achievements/achievements.module';
     HrModule,
     NotificationsModule,
     AchievementsModule,
+    EmailModule,
+    RemindersModule,
   ],
   providers: [{ provide: APP_INTERCEPTOR, useClass: AuditLogInterceptor }],
 })

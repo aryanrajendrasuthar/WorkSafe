@@ -60,7 +60,7 @@ const navByRole: Record<string, NavItem[]> = {
     { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
     { label: 'Risk Overview', href: '/safety/dashboard', icon: TrendingUp },
     { label: 'Users', href: '/admin/users', icon: Users },
-    { label: 'Departments', href: '/admin/departments', icon: Building2 },
+    { label: 'Departments', href: '/hr/departments', icon: Building2 },
     { label: 'Billing', href: '/admin/billing', icon: FileBarChart },
     { label: 'Settings', href: '/admin/settings', icon: Settings },
     { label: 'Audit Log', href: '/admin/audit', icon: ClipboardList },

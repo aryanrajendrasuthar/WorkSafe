@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Bell, Moon, Sun, BellOff, BellRing, Shield, Smartphone, Monitor, LogOut, Trash2, ChevronRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Bell, Moon, Sun, BellOff, BellRing, Shield, Smartphone, Monitor, LogOut, Trash2, ChevronRight, KeyRound, ScanLine, CheckCircle2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -29,12 +30,66 @@ export default function SettingsPage() {
   const [pushLoading, setPushLoading] = useState(false);
   const [pushSupported] = useState(() => 'serviceWorker' in navigator && 'PushManager' in window);
 
+  // MFA state
+  const [mfaEnabled, setMfaEnabled] = useState(false);
+  const [mfaStep, setMfaStep] = useState<'idle' | 'setup' | 'disable'>('idle');
+  const [mfaQr, setMfaQr] = useState('');
+  const [mfaSecret, setMfaSecret] = useState('');
+  const [mfaCode, setMfaCode] = useState('');
+  const [mfaLoading, setMfaLoading] = useState(false);
+
   useEffect(() => {
     if (!pushSupported) return;
     navigator.serviceWorker.ready.then((reg) =>
       reg.pushManager.getSubscription().then((sub) => setPushEnabled(!!sub)),
     );
   }, [pushSupported]);
+
+  useEffect(() => {
+    api.get('/users/me').then((r) => {
+      const u = r.data.data ?? r.data;
+      setMfaEnabled(!!u?.isMfaEnabled);
+    }).catch(() => {});
+  }, []);
+
+  const startMfaSetup = async () => {
+    setMfaLoading(true);
+    try {
+      const res = await api.post('/auth/mfa/setup');
+      const { secret, qrCode } = res.data.data;
+      setMfaSecret(secret);
+      setMfaQr(qrCode);
+      setMfaCode('');
+      setMfaStep('setup');
+    } catch { toast.error('Failed to start MFA setup'); }
+    finally { setMfaLoading(false); }
+  };
+
+  const confirmMfaSetup = async () => {
+    if (mfaCode.length !== 6) return;
+    setMfaLoading(true);
+    try {
+      await api.post('/auth/mfa/verify-setup', { token: mfaCode });
+      setMfaEnabled(true);
+      setMfaStep('idle');
+      setMfaCode('');
+      toast.success('Two-factor authentication enabled');
+    } catch { toast.error('Invalid code — try again'); }
+    finally { setMfaLoading(false); }
+  };
+
+  const disableMfa = async () => {
+    if (mfaCode.length !== 6) return;
+    setMfaLoading(true);
+    try {
+      await api.post('/auth/mfa/disable', { token: mfaCode });
+      setMfaEnabled(false);
+      setMfaStep('idle');
+      setMfaCode('');
+      toast.success('Two-factor authentication disabled');
+    } catch { toast.error('Invalid code — try again'); }
+    finally { setMfaLoading(false); }
+  };
 
   const handlePushToggle = async (enabled: boolean) => {
     if (!pushSupported) { toast.error('Push notifications not supported in this browser'); return; }
@@ -165,8 +220,86 @@ export default function SettingsPage() {
         </Card>
       </motion.div>
 
-      {/* Account */}
+      {/* Two-Factor Authentication */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <KeyRound className="w-4 h-4 text-brand-600" /> Two-Factor Authentication
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${mfaEnabled ? 'bg-green-50 dark:bg-green-900/20' : 'bg-gray-100 dark:bg-gray-800'}`}>
+                  {mfaEnabled ? <CheckCircle2 className="w-4 h-4 text-green-600" /> : <ScanLine className="w-4 h-4 text-gray-400" />}
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Authenticator app (TOTP)</Label>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    {mfaEnabled ? 'Active — your account is protected' : 'Add an extra layer of security at login'}
+                  </p>
+                </div>
+              </div>
+              {mfaStep === 'idle' && (
+                mfaEnabled ? (
+                  <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => { setMfaStep('disable'); setMfaCode(''); }}>
+                    Disable
+                  </Button>
+                ) : (
+                  <Button size="sm" onClick={startMfaSetup} disabled={mfaLoading}>
+                    {mfaLoading ? 'Loading…' : 'Enable'}
+                  </Button>
+                )
+              )}
+            </div>
+
+            <AnimatePresence>
+              {mfaStep === 'setup' && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                  <div className="border dark:border-gray-700 rounded-xl p-4 space-y-4">
+                    <div className="flex items-start justify-between">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">Scan with your authenticator app</p>
+                      <button onClick={() => setMfaStep('idle')} className="text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
+                    </div>
+                    {mfaQr && <img src={mfaQr} alt="MFA QR Code" className="w-48 h-48 mx-auto rounded-lg border" />}
+                    <div className="text-center">
+                      <p className="text-xs text-gray-500 mb-1">Or enter this secret manually:</p>
+                      <code className="text-xs bg-gray-100 dark:bg-gray-800 rounded px-2 py-1 font-mono break-all">{mfaSecret}</code>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm">Enter the 6-digit code to confirm</Label>
+                      <Input value={mfaCode} onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" className="text-center text-xl tracking-widest font-mono" maxLength={6} />
+                      <Button className="w-full" disabled={mfaCode.length !== 6 || mfaLoading} onClick={confirmMfaSetup}>
+                        {mfaLoading ? 'Verifying…' : 'Confirm & enable'}
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {mfaStep === 'disable' && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
+                  <div className="border border-red-100 dark:border-red-900/30 rounded-xl p-4 space-y-3">
+                    <div className="flex items-start justify-between">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">Confirm to disable 2FA</p>
+                      <button onClick={() => setMfaStep('idle')} className="text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
+                    </div>
+                    <p className="text-xs text-gray-500">Enter your current authenticator code to disable two-factor authentication.</p>
+                    <Input value={mfaCode} onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" className="text-center text-xl tracking-widest font-mono" maxLength={6} />
+                    <Button variant="outline" className="w-full text-red-600 border-red-200 hover:bg-red-50" disabled={mfaCode.length !== 6 || mfaLoading} onClick={disableMfa}>
+                      {mfaLoading ? 'Disabling…' : 'Disable 2FA'}
+                    </Button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Account */}
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
