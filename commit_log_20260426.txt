@@ -1,0 +1,19 @@
+87ac68170da3f69db167cec65fe980e676d2ed07 | 2026-04-26 02:11:22 -0700 | Aryan Rajendra Suthar <aryanrajendrasuthar@gmail.com> | chore: add IP safeguards and authorship provenance
+d51abb89a05d7e2b6aebc33e1ffcba416f636294 | 2026-04-26 01:26:40 -0700 | Aryan <aryanrajendrasuthar@gmail.com> | Implementations are done with all features implemented
+b283df71147e12560f850c3d4d2c82d8320b0bfd | 2026-04-25 20:17:42 -0700 | Aryan <aryanrajendrasuthar@gmail.com> | All implementations are done now moving on to test
+21f47f5254cf7a73f66d2e076b9c0167ac11d70b | 2026-04-25 15:53:42 -0700 | Aryan <aryanrajendrasuthar@gmail.com> | Real time notifications done
+d41b79938a1fccdc3e6315000e0aa7ead9875e3f | 2026-04-25 15:11:58 -0700 | Aryan <aryanrajendrasuthar@gmail.com> | updated readme file
+56058c9aaa1c726c700a12a48782b71ac1da25c7 | 2026-04-25 15:04:36 -0700 | Aryan <aryanrajendrasuthar@gmail.com> | Modified the flow and features
+02f8944fc9505dbbc44af57bce63371f05d058dc | 2026-04-23 16:47:50 -0700 | Aryan <aryanrajendrasuthar@gmail.com> | Errors fixed 2
+962c8e411ce7d971cd07de43804a35bfc93533c6 | 2026-04-23 16:38:41 -0700 | Aryan <aryanrajendrasuthar@gmail.com> | Errors fixed
+c6280ddcc8b741f1f7927e9a58cc7f4579893f8d | 2026-04-23 16:35:08 -0700 | Aryan <aryanrajendrasuthar@gmail.com> | Everything's fixed and ready
+5c6e54d2e668a08684fe549ae9d1ea1738f6ec95 | 2026-04-22 17:46:33 -0700 | Aryan <aryanrajendrasuthar@gmail.com> | I guess i fixed it, let's see
+6fc9de3cc186998851567138a335a546a800cb2c | 2026-04-22 17:21:51 -0700 | Aryan <aryanrajendrasuthar@gmail.com> | Final code changes for role management
+d15a0a736c4d90e5dd8ef59d1a485d1d52e63486 | 2026-04-22 17:01:37 -0700 | Aryan <aryanrajendrasuthar@gmail.com> | Updated bug fixes on github
+9fa91e36aa9ddf33a97bb7f85aeb0c5f116bf052 | 2026-04-22 16:48:05 -0700 | Aryan <aryanrajendrasuthar@gmail.com> | All fixes are updated
+5e41efba8d2822326d814a0761e534552df4f0c2 | 2026-04-21 22:43:06 -0700 | Aryan <aryanrajendrasuthar@gmail.com> | Commit for sprint-6: Final One
+f74e6c17d1cd09b6646db19bfa4e0c4fed61dd67 | 2026-04-21 22:28:41 -0700 | Aryan <aryanrajendrasuthar@gmail.com> | Commit for sprint-5: OSHA
+9a54684cc51f950ed8b475366621af02fbc6e589 | 2026-04-21 20:51:52 -0700 | Aryan <aryanrajendrasuthar@gmail.com> | Commit for sprint-4: backend risk module
+138acc0c2903dfd773ac7377eb4da4c250a1f5c3 | 2026-04-21 17:13:04 -0700 | Aryan <aryanrajendrasuthar@gmail.com> | Commit for sprint-3: frontend and backend
+82cc77e144bd6fc1485d752c3cb6627a4d2d20e0 | 2026-04-21 16:51:08 -0700 | Aryan <aryanrajendrasuthar@gmail.com> | Commit for sprint-2
+9fc522928ea442950c2c9efe5d6bab84e272fbbf | 2026-04-21 14:04:12 -0700 | Aryan <aryanrajendrasuthar@gmail.com> | Initial commit of sprint-1/WorkSafe
