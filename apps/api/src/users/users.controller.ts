@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Put,
+  Patch,
   Body,
   Param,
   UseGuards,
@@ -31,6 +32,21 @@ export class UsersController {
     @Query('role') role?: Role,
   ) {
     return this.usersService.findByOrg(user.organizationId, role);
+  }
+
+  @Get('me')
+  @ApiOperation({ summary: 'Get current user profile' })
+  async getMe(@CurrentUser() user: { id: string }) {
+    return this.usersService.findById(user.id);
+  }
+
+  @Patch('me')
+  @ApiOperation({ summary: 'Update own profile' })
+  async updateMe(
+    @CurrentUser() user: { id: string },
+    @Body() body: { firstName?: string; lastName?: string; avatarUrl?: string },
+  ) {
+    return this.usersService.updateUser(user.id, body);
   }
 
   @Get(':id')

@@ -53,6 +53,10 @@ const HREmployees = lazy(() => import('./pages/hr-admin/Employees'));
 const HRDepartments = lazy(() => import('./pages/hr-admin/DepartmentsPage'));
 const HRInvites = lazy(() => import('./pages/hr-admin/Invites'));
 
+// Shared user pages — lazy loaded
+const ProfilePage = lazy(() => import('./pages/profile/Profile'));
+const SettingsPage = lazy(() => import('./pages/profile/Settings'));
+
 // Company Admin pages — lazy loaded
 const CompanyAdminDashboard = lazy(() => import('./pages/company-admin/Dashboard'));
 const AdminUsers = lazy(() => import('./pages/company-admin/Users'));
@@ -211,6 +215,28 @@ export default function App() {
             <Route path="settings" element={<Suspense fallback={<PageLoader />}><CompanySettings /></Suspense>} />
             <Route path="audit" element={<Suspense fallback={<PageLoader />}><AuditLogPage /></Suspense>} />
             <Route path="overview" element={<Navigate to="/safety/dashboard" replace />} />
+          </Route>
+
+          {/* Shared pages — accessible to all authenticated roles */}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute allowedRoles={['WORKER', 'THERAPIST', 'SAFETY_MANAGER', 'HR_ADMIN', 'COMPANY_ADMIN']}>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Suspense fallback={<PageLoader />}><ProfilePage /></Suspense>} />
+          </Route>
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute allowedRoles={['WORKER', 'THERAPIST', 'SAFETY_MANAGER', 'HR_ADMIN', 'COMPANY_ADMIN']}>
+                <AppLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Suspense fallback={<PageLoader />}><SettingsPage /></Suspense>} />
           </Route>
 
           {/* Fallback */}

@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
+import { useQueryClient } from '@tanstack/react-query';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email'),
@@ -22,6 +23,7 @@ export default function Login() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const setAuth = useAuthStore((s) => s.setAuth);
+  const queryClient = useQueryClient();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
@@ -40,6 +42,7 @@ export default function Login() {
     try {
       const res = await api.post('/auth/login', data);
       const { user, tokens } = res.data.data;
+      queryClient.clear();
       setAuth(user, tokens.accessToken, tokens.refreshToken);
 
       // Route based on role and onboarding status

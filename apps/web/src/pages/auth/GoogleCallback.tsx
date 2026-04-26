@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ShieldCheck } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
 
@@ -8,6 +9,7 @@ export default function GoogleCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const setAuth = useAuthStore((s) => s.setAuth);
+  const queryClient = useQueryClient();
   const handled = useRef(false);
 
   useEffect(() => {
@@ -27,6 +29,7 @@ export default function GoogleCallback() {
     api.get('/auth/me')
       .then((res) => {
         const user = res.data.data ?? res.data;
+        queryClient.clear();
         setAuth(user, accessToken, refreshToken);
 
         if (!user.isOnboarded && user.role === 'WORKER') {

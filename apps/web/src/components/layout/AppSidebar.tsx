@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Activity, Dumbbell, AlertTriangle, Users, ClipboardList,
   FileBarChart, Bell, Settings, ChevronLeft, ShieldCheck, LogOut,
-  Building2, TrendingUp, UserCheck, X, Menu, Moon, Sun, Award,
+  Building2, TrendingUp, UserCheck, X, Menu, Moon, Sun, Award, UserCircle,
 } from 'lucide-react';
 import { cn, getInitials } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth.store';
@@ -11,7 +11,11 @@ import { useThemeStore } from '@/store/theme.store';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useQuery } from '@tanstack/react-query';
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 
 interface NavItem {
@@ -75,6 +79,7 @@ export function AppSidebar({ collapsed, onToggle, isMobileOpen, onMobileClose }:
   const { isDark, toggle: toggleTheme } = useThemeStore();
   const location = useLocation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const navItems = navByRole[user?.role || 'WORKER'] || [];
 
@@ -84,6 +89,7 @@ export function AppSidebar({ collapsed, onToggle, isMobileOpen, onMobileClose }:
     } catch {
       // ignore
     }
+    queryClient.clear();
     logout();
     navigate('/login');
   };
@@ -247,8 +253,10 @@ const NOTIF_HREF: Record<string, string> = {
 };
 
 export function TopBar({ onMobileMenuOpen, collapsed }: { onMobileMenuOpen: () => void; collapsed: boolean }) {
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
+  const { isDark, toggle: toggleTheme } = useThemeStore();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: unreadData } = useQuery({
     queryKey: ['notifications', 'unread'],
@@ -258,6 +266,13 @@ export function TopBar({ onMobileMenuOpen, collapsed }: { onMobileMenuOpen: () =
 
   const unreadCount: number = unreadData?.count ?? 0;
   const notifHref = user?.role ? NOTIF_HREF[user.role] : null;
+
+  const handleLogout = async () => {
+    try { await api.post('/auth/logout'); } catch { /* ignore */ }
+    queryClient.clear();
+    logout();
+    navigate('/login');
+  };
 
   return (
     <header className={cn(
@@ -273,9 +288,19 @@ export function TopBar({ onMobileMenuOpen, collapsed }: { onMobileMenuOpen: () =
 
       <div className="flex-1" />
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
+        {/* Theme toggle */}
         <button
-          className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 transition-colors"
+          onClick={toggleTheme}
+          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors"
+          aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {isDark ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
+        </button>
+
+        {/* Notification bell */}
+        <button
+          className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 transition-colors"
           onClick={() => notifHref && navigate(notifHref)}
           aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
         >
@@ -286,12 +311,51 @@ export function TopBar({ onMobileMenuOpen, collapsed }: { onMobileMenuOpen: () =
             </span>
           )}
         </button>
-        <Avatar className="w-8 h-8 cursor-pointer">
-          <AvatarImage src={user?.avatarUrl} />
-          <AvatarFallback className="gradient-brand text-white text-xs">
-            {user ? getInitials(user.firstName, user.lastName) : 'U'}
-          </AvatarFallback>
-        </Avatar>
+
+        {/* Avatar dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-2 rounded-full focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 ml-1">
+              <Avatar className="w-8 h-8 cursor-pointer ring-2 ring-transparent hover:ring-brand-300 transition-all">
+                <AvatarImage src={user?.avatarUrl} />
+                <AvatarFallback className="gradient-brand text-white text-xs font-semibold">
+                  {user ? getInitials(user.firstName, user.lastName) : 'U'}
+                </AvatarFallback>
+              </Avatar>
+            </button>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel className="px-3 py-2">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                {user?.firstName} {user?.lastName}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 font-normal truncate mt-0.5">{user?.email}</p>
+            </DropdownMenuLabel>
+
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem onClick={() => navigate('/profile')}>
+              <UserCircle className="w-4 h-4 text-gray-500" />
+              Profile
+            </DropdownMenuItem>
+
+            <DropdownMenuItem onClick={() => navigate('/settings')}>
+              <Settings className="w-4 h-4 text-gray-500" />
+              Settings
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem
+              onClick={handleLogout}
+              className="text-red-600 dark:text-red-400 hover:!bg-red-50 dark:hover:!bg-red-900/20 focus:!bg-red-50 dark:focus:!bg-red-900/20 focus:!text-red-600"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </header>
   );

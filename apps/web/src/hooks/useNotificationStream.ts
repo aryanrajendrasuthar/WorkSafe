@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/auth.store';
 
-interface NotificationEvent {
+interface NotificationPayload {
   id: string;
   type: string;
   title: string;
@@ -12,7 +12,11 @@ interface NotificationEvent {
   createdAt: string;
 }
 
-const SSE_BASE = import.meta.env.VITE_API_URL || '/api';
+// In dev Vite proxies /api but buffers SSE — connect directly to the API port.
+// In production VITE_API_URL is the full deployed URL.
+const SSE_BASE = import.meta.env.DEV
+  ? 'http://localhost:3001'
+  : (import.meta.env.VITE_API_URL ?? '');
 
 export function useNotificationStream() {
   const token = useAuthStore((s) => s.accessToken);
@@ -33,15 +37,22 @@ export function useNotificationStream() {
       const es = new EventSource(url);
       esRef.current = es;
 
-      es.onmessage = (e) => {
+      const handleEvent = (e: MessageEvent) => {
         try {
-          const event: NotificationEvent = JSON.parse(e.data);
-          showToast(event);
+          const raw = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
+          // NestJS wraps the payload in { data: ... } when TransformInterceptor is bypassed
+          const payload: NotificationPayload = raw?.id ? raw : raw?.data ?? raw;
+          if (!payload?.title) return;
+          showToast(payload);
           queryClient.invalidateQueries({ queryKey: ['notifications'] });
         } catch {
           // ignore parse errors
         }
       };
+
+      // NestJS @Sse() can emit as 'message' or as a named event type
+      es.onmessage = handleEvent;
+      es.addEventListener('notification', handleEvent);
 
       es.onerror = () => {
         es.close();
@@ -63,16 +74,17 @@ export function useNotificationStream() {
   }, [token, isAuthenticated, queryClient]);
 }
 
-function showToast(event: NotificationEvent) {
+function showToast(event: NotificationPayload) {
   const icon = (event.data?.icon as string) ?? getDefaultIcon(event.type);
-  const description = event.message;
 
   if (event.type === 'ACHIEVEMENT_UNLOCKED') {
-    toast.success(event.title, { description, icon, duration: 6000 });
+    toast.success(event.title, { description: event.message, icon, duration: 6000 });
   } else if (event.type === 'ALERT' || event.type === 'INCIDENT_REPORTED') {
-    toast.error(event.title, { description, duration: 8000 });
+    toast.error(event.title, { description: event.message, duration: 8000 });
+  } else if (event.type === 'ESCALATION') {
+    toast.warning(event.title, { description: event.message, duration: 7000 });
   } else {
-    toast.info(event.title, { description, duration: 5000 });
+    toast.info(event.title, { description: event.message, duration: 5000 });
   }
 }
 

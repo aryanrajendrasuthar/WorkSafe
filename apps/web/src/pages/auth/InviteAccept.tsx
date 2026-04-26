@@ -8,6 +8,7 @@ import { ShieldCheck, Eye, EyeOff, AlertCircle, CheckCircle2, Loader2 } from 'lu
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth.store';
 
@@ -33,6 +34,7 @@ export default function InviteAccept() {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
   const setAuth = useAuthStore((s) => s.setAuth);
+  const queryClient = useQueryClient();
   const [invite, setInvite] = useState<InviteDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [inviteError, setInviteError] = useState('');
@@ -61,6 +63,7 @@ export default function InviteAccept() {
         password: data.password,
       });
       const { user, tokens } = res.data.data;
+      queryClient.clear();
       setAuth(user, tokens.accessToken, tokens.refreshToken);
 
       const roleRoutes: Record<string, string> = {
