@@ -486,18 +486,21 @@ pnpm --filter web run dev   # Web on :3000
 
 ---
 
-## What's Not Implemented Yet
+## Implementation Status
 
 | Feature | Status | Notes |
 |---|---|---|
-| Email sending | Not built | `SENDGRID_API_KEY` is wired in env, `Notification` model exists, but no `EmailService`. Invite links are copy-paste only. |
-| Stripe billing | Not integrated | UI exists, payment processing not wired up |
-| Push notifications | Not built | `NotificationChannel.PUSH` enum exists but no service worker push configured |
-| MFA (TOTP) | Not built | `isMfaEnabled` / `mfaSecret` columns exist in `User` table, no setup/verify endpoints yet |
-| SAML SSO | Not built | Planned for enterprise tier |
-| Redis / BullMQ queues | Not running | Notification reminder jobs and risk score scheduling planned but not wired |
-| Rep counter (live tap) | Not built | Session player shows target reps statically; no tap-per-rep counter UI yet |
-| Exercise timer ring | Not built | Hold timer shows countdown number; circular conic ring (like rest timer) not added to exercise phase yet |
+| Email sending | **Done** | SendGrid integration with graceful console fallback; password reset, invite, and welcome emails |
+| Push notifications | **Done** | VAPID / web-push; Settings page toggle; falls back gracefully when keys not configured |
+| MFA (TOTP) | **Done** | Setup with QR code, verify-setup, disable, challenge-token login flow |
+| SAML 2.0 SSO | **Done** | `@node-saml/passport-saml` strategy; `GET /auth/saml` + `POST /auth/saml/callback` |
+| BullMQ scheduled reminders | **Done** | Daily 8 AM check-in reminder + 3-day session reminder; requires Redis in production |
+| Real-time notifications | **Done** | SSE stream; color-coded toasts top-right on every page |
+| Exercise timer | **Done** | Draining progress bar + tick marks for timed holds; large rep counter with dot grid for reps |
+| Profile page | **Done** | Edit name, avatar, change password at `/profile` |
+| Settings page | **Done** | Theme, MFA, push notification toggle at `/settings` |
+| Stripe billing | Not integrated | UI exists (`/admin/billing`); payment processing not wired up |
+| Account deletion | Not built | "Request deletion" button exists in Settings (disabled); requires backend workflow |
 
 ---
 
